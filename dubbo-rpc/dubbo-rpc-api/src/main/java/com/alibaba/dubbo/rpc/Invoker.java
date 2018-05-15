@@ -28,7 +28,8 @@ import com.alibaba.dubbo.common.Node;
 public interface Invoker<T> extends Node {
 
     /**
-     * get service interface.
+     * get service interface.、
+     * 执行器要执行的接口
      *
      * @return service interface.
      */

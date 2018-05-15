@@ -596,7 +596,7 @@ public class ExtensionLoader<T> {
         return extensionClasses;
     }
 
-    // 从文件中加载拓展插件
+    // 从配置文件中加载拓展插件
     private void loadDirectory(Map<String, Class<?>> extensionClasses, String dir) {
         // 获取文件的绝对路径名
         String fileName = dir + type.getName();
@@ -628,6 +628,7 @@ public class ExtensionLoader<T> {
             try {
                 String line;
                 while ((line = reader.readLine()) != null) {
+                    // 去除掉方法 #后面的东西
                     final int ci = line.indexOf('#');
                     if (ci >= 0) line = line.substring(0, ci);
                     line = line.trim();
@@ -666,7 +667,7 @@ public class ExtensionLoader<T> {
                     type + ", class line: " + clazz.getName() + "), class "
                     + clazz.getName() + "is not subtype of interface.");
         }
-        // 激活的class只能有一个
+        // 激活的class只能有一个，首先判断是否有Adaptive注解
         if (clazz.isAnnotationPresent(Adaptive.class)) {
             if (cachedAdaptiveClass == null) {
                 cachedAdaptiveClass = clazz;
@@ -676,11 +677,13 @@ public class ExtensionLoader<T> {
                         + ", " + clazz.getClass().getName());
             }
         } else if (isWrapperClass(clazz)) {
+            // 初始wrapper类的情况
             Set<Class<?>> wrappers = cachedWrapperClasses;
             if (wrappers == null) {
                 cachedWrapperClasses = new ConcurrentHashSet<Class<?>>();
                 wrappers = cachedWrapperClasses;
             }
+            // 添加缓存
             wrappers.add(clazz);
         } else {
             clazz.getConstructor();
@@ -695,14 +698,17 @@ public class ExtensionLoader<T> {
             if (names != null && names.length > 0) {
                 Activate activate = clazz.getAnnotation(Activate.class);
                 if (activate != null) {
+                    // activate 缓存
                     cachedActivates.put(names[0], activate);
                 }
                 for (String n : names) {
                     if (!cachedNames.containsKey(clazz)) {
+                        // cachedNames缓存
                         cachedNames.put(clazz, n);
                     }
                     Class<?> c = extensionClasses.get(n);
                     if (c == null) {
+                        // 放入缓存 key是name, value是class文件
                         extensionClasses.put(n, clazz);
                     } else if (c != clazz) {
                         throw new IllegalStateException("Duplicate extension " + type.getName() + " name " + n + " on " + c.getName() + " and " + clazz.getName());
@@ -744,6 +750,7 @@ public class ExtensionLoader<T> {
     }
 
     private Class<?> getAdaptiveExtensionClass() {
+        // 获取适配后的具体实现类
         // getExtensionClasses 方法 初始化了cachedAdaptiveClass 字段
         getExtensionClasses();
         if (cachedAdaptiveClass != null) {

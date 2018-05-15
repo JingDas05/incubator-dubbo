@@ -38,12 +38,14 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 
 public abstract class Proxy {
+    // 空结果处理器
     public static final InvocationHandler RETURN_NULL_INVOKER = new InvocationHandler() {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) {
             return null;
         }
     };
+    // 返回异常处理器
     public static final InvocationHandler THROW_UNSUPPORTED_INVOKER = new InvocationHandler() {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) {

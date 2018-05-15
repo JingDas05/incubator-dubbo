@@ -23,6 +23,8 @@ import com.alibaba.dubbo.common.extension.SPI;
 @SPI("impl1")
 public interface UseProtocolKeyExt {
     // protocol key is the second
+    // key1 protocol 是 url中的key,这个方法会根据具体的value值，选择具体的实现类，并且调用相对应的方法
+    // 如果key1=impl2，那么这个方法实际调用的是UseProtocolKeyExtImpl2中的echo()方法
     @Adaptive({"key1", "protocol"})
     String echo(URL url, String s);
 
