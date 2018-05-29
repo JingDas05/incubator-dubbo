@@ -34,6 +34,8 @@ import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * 代理处理类
+ * <p>
  * Proxy.
  */
 
@@ -88,6 +90,7 @@ public abstract class Proxy {
             if (!ics[i].isInterface())
                 throw new RuntimeException(itf + " is not a interface.");
 
+            // 检测传入的ics是否属于当前的ClassLoader
             Class<?> tmp = null;
             try {
                 tmp = Class.forName(itf, false, cl);
@@ -103,8 +106,9 @@ public abstract class Proxy {
         // use interface class name list as key.
         String key = sb.toString();
 
-        // get cache by class loader.
+        // get cache by class loader.处理缓存，没有就初始化
         Map<String, Object> cache;
+        // 同步处理，防止多个线程互相覆盖
         synchronized (ProxyCacheMap) {
             cache = ProxyCacheMap.get(cl);
             if (cache == null) {
@@ -112,7 +116,7 @@ public abstract class Proxy {
                 ProxyCacheMap.put(cl, cache);
             }
         }
-
+        // 开始同步构建代理proxy
         Proxy proxy = null;
         synchronized (cache) {
             do {
@@ -135,17 +139,20 @@ public abstract class Proxy {
             }
             while (true);
         }
-
+        // 全局自增id
         long id = PROXY_CLASS_COUNTER.getAndIncrement();
         String pkg = null;
+        // javassist
         ClassGenerator ccp = null, ccm = null;
         try {
+            // 利用javassist生成代理
             ccp = ClassGenerator.newInstance(cl);
 
             Set<String> worked = new HashSet<String>();
             List<Method> methods = new ArrayList<Method>();
 
             for (int i = 0; i < ics.length; i++) {
+                // 校验 non-public interfaces 是否来源于相同的 packages
                 if (!Modifier.isPublic(ics[i].getModifiers())) {
                     String npkg = ics[i].getPackage().getName();
                     if (pkg == null) {
@@ -156,7 +163,7 @@ public abstract class Proxy {
                     }
                 }
                 ccp.addInterface(ics[i]);
-
+                // 遍历每个接口的方法
                 for (Method method : ics[i].getMethods()) {
                     String desc = ReflectUtils.getDesc(method);
                     if (worked.contains(desc))

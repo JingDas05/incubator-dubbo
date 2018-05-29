@@ -34,6 +34,8 @@ public interface Protocol {
     int getDefaultPort();
 
     /**
+     *
+     * 暴露远程服务
      * Export service for remote invocation: <br>
      * 1. Protocol should record request source address after receive a request:
      * 记录远程的地址
@@ -52,6 +54,8 @@ public interface Protocol {
     <T> Exporter<T> export(Invoker<T> invoker) throws RpcException;
 
     /**
+     *
+     * 引用远程服务
      * Refer a remote service: <br>
      * 1. When user calls `invoke()` method of `Invoker` object which's returned from `refer()` call,
      * 当用户调用invoke时，protocol对照着执行invoke()

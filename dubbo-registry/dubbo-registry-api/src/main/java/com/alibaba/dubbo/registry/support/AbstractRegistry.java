@@ -51,13 +51,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * AbstractRegistry. (SPI, Prototype, ThreadSafe)
- *
  */
 public abstract class AbstractRegistry implements Registry {
 
     // URL address separator, used in file cache, service provider URL separation
     private static final char URL_SEPARATOR = ' ';
     // URL address separated regular expression for parsing the service provider URL list in the file cache
+    // 匹配任何空白字符，包括空格、制表符、换页符等。与 [ \f\n\r\t\v] 等效。
     private static final String URL_SPLIT = "\\s+";
     // Log output
     protected final Logger logger = LoggerFactory.getLogger(getClass());
@@ -70,6 +70,7 @@ public abstract class AbstractRegistry implements Registry {
     private final AtomicLong lastCacheChanged = new AtomicLong();
     private final Set<URL> registered = new ConcurrentHashSet<URL>();
     private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
+    // map 的 key 是 category；
     private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<URL, Map<String, List<URL>>>();
     private URL registryUrl;
     // Local disk cache file
@@ -90,6 +91,7 @@ public abstract class AbstractRegistry implements Registry {
             }
         }
         this.file = file;
+        // 从 file 中获取 properties
         loadProperties();
         notify(url.getBackupUrls());
     }
@@ -351,13 +353,16 @@ public abstract class AbstractRegistry implements Registry {
     protected void notify(List<URL> urls) {
         if (urls == null || urls.isEmpty()) return;
 
+        // 获取所有订阅本 registry 的服务
         for (Map.Entry<URL, Set<NotifyListener>> entry : getSubscribed().entrySet()) {
             URL url = entry.getKey();
 
+            // 查找urls中的首条 和 注册的url一致的
             if (!UrlUtils.isMatch(url, urls.get(0))) {
                 continue;
             }
 
+            // 循环遍历 监听者，进行通知
             Set<NotifyListener> listeners = entry.getValue();
             if (listeners != null) {
                 for (NotifyListener listener : listeners) {
@@ -415,6 +420,7 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    // 将 properties 参数设置到 url 中
     private void saveProperties(URL url) {
         if (file == null) {
             return;

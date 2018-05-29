@@ -368,6 +368,7 @@ public final class URL implements Serializable {
 
     public List<URL> getBackupUrls() {
         List<URL> urls = new ArrayList<URL>();
+        // 首先加上 this
         urls.add(this);
         String[] backups = getParameter(Constants.BACKUP_KEY, new String[0]);
         if (backups != null && backups.length > 0) {

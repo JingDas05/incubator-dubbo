@@ -37,6 +37,7 @@ public interface Invoker<T> extends Node {
 
     /**
      * invoke.
+     * 代理执行 invocation， invocation包含了要执行的 getMethodName，getParameterTypes， getArguments
      *
      * @param invocation
      * @return result

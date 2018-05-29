@@ -69,12 +69,15 @@ public class DubboProtocol extends AbstractProtocol {
     //consumer side export a stub service for dispatching event
     //servicekey-stubmethods
     private final ConcurrentMap<String, String> stubServiceMethodsMap = new ConcurrentHashMap<String, String>();
+    // 初始化请求处理器
     private ExchangeHandler requestHandler = new ExchangeHandlerAdapter() {
 
+        // reply回答答复
         @Override
         public Object reply(ExchangeChannel channel, Object message) throws RemotingException {
             if (message instanceof Invocation) {
                 Invocation inv = (Invocation) message;
+                // 根据 ExchangeChannel Invocation 获取执行器 Invoker
                 Invoker<?> invoker = getInvoker(channel, inv);
                 // need to consider backward-compatibility if it's a callback
                 if (Boolean.TRUE.toString().equals(inv.getAttachments().get(IS_CALLBACK_SERVICE_INVOKE))) {
@@ -99,7 +102,9 @@ public class DubboProtocol extends AbstractProtocol {
                         return null;
                     }
                 }
+                // ThreadLocal 设置 远程调用地址
                 RpcContext.getContext().setRemoteAddress(channel.getRemoteAddress());
+                // 返回执行结果
                 return invoker.invoke(inv);
             }
             throw new RemotingException(channel, "Unsupported request: "
@@ -223,8 +228,14 @@ public class DubboProtocol extends AbstractProtocol {
         return DEFAULT_PORT;
     }
 
+    // *****************************************************************************************************************
+    // 核心方法，向注册中心暴露服务
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        // 生成Invoker时，并没有使用url，暴露服务时开始使用url
+        // dubbo-demo provider url = dubbo://192.168.73.1:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&
+        // application=demo-provider&bind.ip=192.168.73.1&bind.port=20880&dubbo=2.0.0&generic=false&
+        // interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=10224&qos.port=22222&side=provider&timestamp=1527576165704
         URL url = invoker.getUrl();
 
         // export service.
@@ -257,6 +268,7 @@ public class DubboProtocol extends AbstractProtocol {
         String key = url.getAddress();
         //client can export a service which's only for server to invoke
         boolean isServer = url.getParameter(Constants.IS_SERVER_KEY, true);
+        // 缓存服务
         if (isServer) {
             ExchangeServer server = serverMap.get(key);
             if (server == null) {
@@ -268,16 +280,20 @@ public class DubboProtocol extends AbstractProtocol {
         }
     }
 
+    // 如果找不到服务，新建服务
     private ExchangeServer createServer(URL url) {
         // send readonly event when server closes, it's enabled by default
         url = url.addParameterIfAbsent(Constants.CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString());
         // enable heartbeat by default
         url = url.addParameterIfAbsent(Constants.HEARTBEAT_KEY, String.valueOf(Constants.DEFAULT_HEARTBEAT));
+        // 获取服务器类型
         String str = url.getParameter(Constants.SERVER_KEY, Constants.DEFAULT_REMOTING_SERVER);
 
+        // 如果不支持服务器类型，抛出异常
         if (str != null && str.length() > 0 && !ExtensionLoader.getExtensionLoader(Transporter.class).hasExtension(str))
             throw new RpcException("Unsupported server type: " + str + ", url: " + url);
 
+        // 编码格式  codec:dubbo
         url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
         ExchangeServer server;
         try {

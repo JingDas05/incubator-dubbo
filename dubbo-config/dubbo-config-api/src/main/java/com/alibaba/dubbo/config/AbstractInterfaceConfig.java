@@ -54,6 +54,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     protected String local;
 
     // local stub class name for the service interface
+
     protected String stub;
 
     // service monitor
@@ -76,6 +77,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
 
     // connection limits, 0 means shared connection, otherwise it defines the connections delegated to the
     // current service
+    // 每个提供者的最大连接数，rmi、http、hessian等短连接协议表示限制连接数，dubbo等长
+    // 连接协表示建立的长连接个数	2.0.0以上版本
     protected Integer connections;
 
     // layer
@@ -88,6 +91,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     protected ModuleConfig module;
 
     // registry centers
+    // 向指定注册中心注册，在多个注册中心时使用，值为<dubbo:registry>的id属性，多个注册中心ID用逗号分隔，
+    // 如果不想将该服务注册到任何registry，可将值设为N/A
     protected List<RegistryConfig> registries;
 
     // connection events
@@ -156,21 +161,26 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         }
     }
 
+    // 获取注册的地址
     protected List<URL> loadRegistries(boolean provider) {
         checkRegistry();
         List<URL> registryList = new ArrayList<URL>();
+        // 循环遍历指定的注册中心
         if (registries != null && !registries.isEmpty()) {
             for (RegistryConfig config : registries) {
                 String address = config.getAddress();
                 if (address == null || address.length() == 0) {
+                    // 如果地址为空，就用本地的
                     address = Constants.ANYHOST_VALUE;
                 }
+                // 读取 dubbo.registry.address 配置（优先）
                 String sysaddress = System.getProperty("dubbo.registry.address");
                 if (sysaddress != null && sysaddress.length() > 0) {
                     address = sysaddress;
                 }
                 if (address.length() > 0 && !RegistryConfig.NO_AVAILABLE.equalsIgnoreCase(address)) {
                     Map<String, String> map = new HashMap<String, String>();
+                    // map中添加 application name
                     appendParameters(map, application);
                     appendParameters(map, config);
                     map.put("path", RegistryService.class.getName());
@@ -190,6 +200,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                     for (URL url : urls) {
                         url = url.addParameter(Constants.REGISTRY_KEY, url.getProtocol());
                         url = url.setProtocol(Constants.REGISTRY_PROTOCOL);
+                        // 如果是 provider 才会添加到 注册列表中 registryList
                         if ((provider && url.getParameter(Constants.REGISTER_KEY, true))
                                 || (!provider && url.getParameter(Constants.SUBSCRIBE_KEY, true))) {
                             registryList.add(url);

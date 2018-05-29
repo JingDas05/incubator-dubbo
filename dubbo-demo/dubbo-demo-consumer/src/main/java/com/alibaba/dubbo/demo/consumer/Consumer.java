@@ -38,9 +38,6 @@ public class Consumer {
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
-
-
         }
-
     }
 }

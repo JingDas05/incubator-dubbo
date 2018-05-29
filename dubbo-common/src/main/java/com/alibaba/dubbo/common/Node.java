@@ -18,6 +18,7 @@ package com.alibaba.dubbo.common;
 
 /**
  * Node. (API/SPI, Prototype, ThreadSafe)
+ * 服务即节点
  */
 public interface Node {
 

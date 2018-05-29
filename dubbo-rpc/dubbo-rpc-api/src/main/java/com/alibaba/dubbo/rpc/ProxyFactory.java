@@ -39,10 +39,12 @@ public interface ProxyFactory {
     /**
      * create invoker.
      *
-     * @param <T>
-     * @param proxy
-     * @param type
-     * @param url
+     * @param <T> 服务的具体实现类，dubbo-demo中就是 DemoServiceImpl
+     * @param proxy 服务的具体实现类的实例，dubbo-demo中就是 demoServiceImpl
+     * @param type 服务接口，dubbo-demo中就是 DemoService
+     * @param url 是注册中心的地址，在dubbo-demo中是 registry://224.5.6.7:1234/com.alibaba.dubbo.registry.RegistryService?
+     *            application=demo-provider&dubbo=2.0.0&
+     *            export=dubbo%3A%2F%2F192.168.73.1%3A20880%2Fcom.alibaba.dubbo.demo.DemoService%3Fanyhost%3Dtrue%26application%3Ddemo-provider%26bind.ip%3D192.168.73.1%26bind.port%3D20880%26dubbo%3D2.0.0%26generic%3Dfalse%26interface%3Dcom.alibaba.dubbo.demo.DemoService%26methods%3DsayHello%26pid%3D10348%26qos.port%3D22222%26side%3Dprovider%26timestamp%3D1527565064290&pid=10348&qos.port=22222&registry=multicast&timestamp=1527565064275
      * @return invoker
      */
     @Adaptive({Constants.PROXY_KEY})

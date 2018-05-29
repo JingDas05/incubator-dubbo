@@ -47,6 +47,7 @@ import static org.junit.matchers.JUnitMatchers.containsString;
 public class ExtensionLoader_Adaptive_Test {
 
     @Test
+    // 如果实现类注解了@Adaptive，那么优先获取注解了此注解的实现类
     public void test_useAdaptiveClass() throws Exception {
         ExtensionLoader<HasAdaptiveExt> loader = ExtensionLoader.getExtensionLoader(HasAdaptiveExt.class);
         HasAdaptiveExt ext = loader.getAdaptiveExtension();
@@ -59,9 +60,11 @@ public class ExtensionLoader_Adaptive_Test {
             SimpleExt ext = ExtensionLoader.getExtensionLoader(SimpleExt.class).getAdaptiveExtension();
 
             Map<String, String> map = new HashMap<String, String>();
+            // URL为 Dubbo 重新定义的URL，根据url获取对应的拓展
             URL url = new URL("p1", "1.2.3.4", 1010, "path1", map);
 
             String echo = ext.echo(url, "haha");
+            // 接口注释了@SPI("impl1"),优先选择实现类 SimpleExtImpl1
             assertEquals("Ext1Impl1-echo", echo);
         }
 
@@ -133,6 +136,7 @@ public class ExtensionLoader_Adaptive_Test {
     public void test_getAdaptiveExtension_UrlNpe() throws Exception {
         SimpleExt ext = ExtensionLoader.getExtensionLoader(SimpleExt.class).getAdaptiveExtension();
 
+        // 如果不传入 URL 会报错
         try {
             ext.echo(null, "haha");
             fail();

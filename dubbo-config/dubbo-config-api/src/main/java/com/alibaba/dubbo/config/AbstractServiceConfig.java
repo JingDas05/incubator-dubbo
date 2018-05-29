@@ -36,12 +36,14 @@ public abstract class AbstractServiceConfig extends AbstractInterfaceConfig {
     protected String version;
 
     // group
+    // 服务分组，当一个接口有多个实现，可以用分组区分
     protected String group;
 
     // whether the service is deprecated
     protected Boolean deprecated;
 
     // delay service exporting
+    // 延迟注册服务时间(毫秒) ，设为-1时，表示延迟到Spring容器初始化完成时暴露服务
     protected Integer delay;
 
     // whether to export the service
