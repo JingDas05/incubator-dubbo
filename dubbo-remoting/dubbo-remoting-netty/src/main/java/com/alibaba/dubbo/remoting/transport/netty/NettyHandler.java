@@ -64,6 +64,7 @@ public class NettyHandler extends SimpleChannelHandler {
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.getChannel(), url, handler);
         try {
             if (channel != null) {
+                // 每次连接的时候，记录连接通道
                 channels.put(NetUtils.toAddressString((InetSocketAddress) ctx.getChannel().getRemoteAddress()), channel);
             }
             handler.connected(channel);
@@ -87,6 +88,8 @@ public class NettyHandler extends SimpleChannelHandler {
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.getChannel(), url, handler);
         try {
+            // *********************************************************************************************************
+            // 核心，实际上调用的是handler的 receive 方法
             handler.received(channel, e.getMessage());
         } finally {
             NettyChannel.removeChannelIfDisconnected(ctx.getChannel());
@@ -98,6 +101,8 @@ public class NettyHandler extends SimpleChannelHandler {
         super.writeRequested(ctx, e);
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.getChannel(), url, handler);
         try {
+            // *********************************************************************************************************
+            // 核心，实际上调用的是handler的 sent 方法
             handler.sent(channel, e.getMessage());
         } finally {
             NettyChannel.removeChannelIfDisconnected(ctx.getChannel());

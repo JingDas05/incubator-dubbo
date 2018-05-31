@@ -27,8 +27,13 @@ public class NettyTransporter implements Transporter {
 
     public static final String NAME = "netty";
 
+    // 每一个url 创建一个netty服务器,也就是说 provider 每个方法一个netty
     @Override
     public Server bind(URL url, ChannelHandler listener) throws RemotingException {
+        // dubbo-demo provider dubbo://192.168.73.1:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&
+        // application=demo-provider&bind.ip=192.168.73.1&bind.port=20880&channel.readonly.sent=true&
+        // codec=dubbo&dubbo=2.0.0&generic=false&heartbeat=60000&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&
+        // pid=8060&qos.port=22222&side=provider&timestamp=1527650552231
         return new NettyServer(url, listener);
     }
 

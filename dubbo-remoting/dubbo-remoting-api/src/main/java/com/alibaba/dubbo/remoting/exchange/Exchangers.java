@@ -59,6 +59,7 @@ public class Exchangers {
         return bind(URL.valueOf(url), handler);
     }
 
+    // 创建服务端
     public static ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {
         if (url == null) {
             throw new IllegalArgumentException("url == null");
@@ -67,6 +68,7 @@ public class Exchangers {
             throw new IllegalArgumentException("handler == null");
         }
         url = url.addParameterIfAbsent(Constants.CODEC_KEY, "exchange");
+        // url 的作用主要是为了获取 url 中参数exchanger的值，getExchanger(url)的结果默认时 HeaderExchanger
         return getExchanger(url).bind(url, handler);
     }
 
@@ -109,6 +111,7 @@ public class Exchangers {
         return getExchanger(url).connect(url, handler);
     }
 
+    // 默认是 HeaderExchanger
     public static Exchanger getExchanger(URL url) {
         String type = url.getParameter(Constants.EXCHANGER_KEY, Constants.DEFAULT_EXCHANGER);
         return getExchanger(type);

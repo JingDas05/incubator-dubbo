@@ -33,12 +33,13 @@ import com.alibaba.dubbo.remoting.exchange.support.DefaultFuture;
 import java.net.InetSocketAddress;
 
 /**
- * ExchangeReceiver
+ * ExchangeReceiver 交互
  */
 final class HeaderExchangeChannel implements ExchangeChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(HeaderExchangeChannel.class);
 
+    // key 的名字是 类名.CHANNEL
     private static final String CHANNEL_KEY = HeaderExchangeChannel.class.getName() + ".CHANNEL";
 
     private final Channel channel;
@@ -60,6 +61,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         if (ret == null) {
             ret = new HeaderExchangeChannel(ch);
             if (ch.isConnected()) {
+                // 将自己加入到 属性中
                 ch.setAttribute(CHANNEL_KEY, ret);
             }
         }
@@ -67,6 +69,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
     }
 
     static void removeChannelIfDisconnected(Channel ch) {
+        // remove 是从自己的属性中移除
         if (ch != null && !ch.isConnected()) {
             ch.removeAttribute(CHANNEL_KEY);
         }
@@ -85,12 +88,14 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         if (message instanceof Request
                 || message instanceof Response
                 || message instanceof String) {
+            // sent already sent to socket?
             channel.send(message, sent);
         } else {
             Request request = new Request();
             request.setVersion("2.0.0");
             request.setTwoWay(false);
             request.setData(message);
+            // sent already sent to socket?
             channel.send(request, sent);
         }
     }

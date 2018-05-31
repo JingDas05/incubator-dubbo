@@ -51,8 +51,10 @@ public class Transporters {
         if (handlers.length == 1) {
             handler = handlers[0];
         } else {
+            // 多个处理器的话，使用分发器
             handler = new ChannelHandlerDispatcher(handlers);
         }
+        // 获取 netty 服务器
         return getTransporter().bind(url, handler);
     }
 
@@ -75,6 +77,7 @@ public class Transporters {
         return getTransporter().connect(url, handler);
     }
 
+    // 默认是 netty
     public static Transporter getTransporter() {
         return ExtensionLoader.getExtensionLoader(Transporter.class).getAdaptiveExtension();
     }
