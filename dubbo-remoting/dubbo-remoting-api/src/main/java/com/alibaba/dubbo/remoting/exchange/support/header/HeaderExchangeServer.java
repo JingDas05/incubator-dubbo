@@ -253,6 +253,7 @@ public class HeaderExchangeServer implements ExchangeServer {
         server.send(message, sent);
     }
 
+    // 创建心跳
     private void startHeartbeatTimer() {
         stopHeartbeatTimer();
         if (heartbeat > 0) {

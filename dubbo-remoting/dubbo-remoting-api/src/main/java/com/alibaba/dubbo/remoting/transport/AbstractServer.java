@@ -79,6 +79,7 @@ public abstract class AbstractServer extends AbstractEndpoint implements Server 
 
     protected abstract void doClose() throws Throwable;
 
+    // 这个方法是有多个service的时候，第二个之后的service需要调用的方法
     @Override
     public void reset(URL url) {
         if (url == null) {
