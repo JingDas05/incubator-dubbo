@@ -86,10 +86,11 @@ public class NettyHandler extends SimpleChannelHandler {
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+        // 获取通道
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.getChannel(), url, handler);
         try {
             // *********************************************************************************************************
-            // 核心，实际上调用的是handler的 receive 方法
+            // 核心，实际上调用的是 handler的 receive 方法, handler 为 DubboProtocol 中的 requestHandler
             handler.received(channel, e.getMessage());
         } finally {
             NettyChannel.removeChannelIfDisconnected(ctx.getChannel());

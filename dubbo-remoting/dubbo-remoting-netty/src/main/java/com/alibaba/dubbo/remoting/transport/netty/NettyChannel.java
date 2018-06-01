@@ -53,6 +53,7 @@ final class NettyChannel extends AbstractChannel {
     }
 
     static NettyChannel getOrAddChannel(org.jboss.netty.channel.Channel ch, URL url, ChannelHandler handler) {
+        // 每次连接的 chanel会被缓存，key是 jboss Channel
         if (ch == null) {
             return null;
         }
