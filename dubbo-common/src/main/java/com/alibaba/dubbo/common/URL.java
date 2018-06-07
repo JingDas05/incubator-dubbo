@@ -308,7 +308,7 @@ public final class URL implements Serializable {
 
     /**
      * Fetch IP address for this URL.
-     *
+     * <p>
      * Pls. note that IP should be used instead of Host when to compare with socket's address or to search in a map
      * which use address as its key.
      *
@@ -652,6 +652,7 @@ public final class URL implements Serializable {
 
     public String getMethodParameter(String method, String key) {
         String value = parameters.get(method + "." + key);
+        // 还是没有取到的话 default.key中获取
         if (value == null || value.length() == 0) {
             return getParameter(key);
         }
@@ -711,17 +712,22 @@ public final class URL implements Serializable {
         return l;
     }
 
+    // 重要方法，负载均衡的时候 获取 权重值 key="weight"
     public int getMethodParameter(String method, String key, int defaultValue) {
         String methodKey = method + "." + key;
+        // 根据methodKey获取权重值
         Number n = getNumbers().get(methodKey);
         if (n != null) {
             return n.intValue();
         }
+        // 处理没有权重值的情况
         String value = getMethodParameter(method, key);
+        // 还是没有取到的话直接返回默认值，不存储
         if (value == null || value.length() == 0) {
             return defaultValue;
         }
         int i = Integer.parseInt(value);
+        // 记录权重值
         getNumbers().put(methodKey, i);
         return i;
     }

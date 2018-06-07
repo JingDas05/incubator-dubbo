@@ -35,6 +35,7 @@ public class AtomicPositiveInteger extends Number {
         i = new AtomicInteger(initialValue);
     }
 
+    // 原子操作，先获取再自增
     public final int getAndIncrement() {
         for (; ; ) {
             int current = i.get();

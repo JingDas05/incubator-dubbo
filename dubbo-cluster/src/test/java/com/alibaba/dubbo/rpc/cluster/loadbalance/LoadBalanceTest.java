@@ -40,7 +40,6 @@ import static org.mockito.Mockito.mock;
 
 /**
  * RoundRobinLoadBalanceTest
- *
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class LoadBalanceTest {
@@ -66,6 +65,7 @@ public class LoadBalanceTest {
     public void setUp() throws Exception {
 
         invocation = mock(Invocation.class);
+        // 设置条件
         given(invocation.getMethodName()).willReturn("method1");
 
         invoker1 = mock(Invoker.class);
@@ -125,7 +125,7 @@ public class LoadBalanceTest {
             Long count = counter.get(minvoker).get();
             // System.out.println(count);
             Assert.assertTrue("abs diff shoud < avg",
-                Math.abs(count - runs / (0f + invokers.size())) < runs / (0f + invokers.size()));
+                    Math.abs(count - runs / (0f + invokers.size())) < runs / (0f + invokers.size()));
         }
 
         for (int i = 0; i < 5; i++) {
@@ -152,11 +152,14 @@ public class LoadBalanceTest {
             Long count = counter.get(minvoker).get();
             //            System.out.println(count);
             Assert.assertTrue("abs diff shoud < avg",
-                Math.abs(count - runs / (0f + invokers.size())) < runs / (0f + invokers.size()));
+                    Math.abs(count - runs / (0f + invokers.size())) < runs / (0f + invokers.size()));
         }
     }
 
+    // loadbalanceName 采用的负载均衡名字
+    // runs 测试的总次数
     public Map<Invoker, AtomicLong> getInvokeCounter(int runs, String loadbalanceName) {
+        // 记录每个Invoker的调用次数
         Map<Invoker, AtomicLong> counter = new ConcurrentHashMap<Invoker, AtomicLong>();
         LoadBalance lb = ExtensionLoader.getExtensionLoader(LoadBalance.class).getExtension(loadbalanceName);
         for (Invoker invoker : invokers) {
@@ -172,33 +175,33 @@ public class LoadBalanceTest {
     @Test
     public void testLoadBalanceWarmup() {
         Assert.assertEquals(1,
-            AbstractLoadBalance.calculateWarmupWeight(0, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                AbstractLoadBalance.calculateWarmupWeight(0, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(1,
-            AbstractLoadBalance.calculateWarmupWeight(13, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                AbstractLoadBalance.calculateWarmupWeight(13, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(1,
-            AbstractLoadBalance.calculateWarmupWeight(6 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                AbstractLoadBalance.calculateWarmupWeight(6 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(2,
-            AbstractLoadBalance.calculateWarmupWeight(12 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                AbstractLoadBalance.calculateWarmupWeight(12 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(10,
-            AbstractLoadBalance.calculateWarmupWeight(60 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                AbstractLoadBalance.calculateWarmupWeight(60 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(50, AbstractLoadBalance
-            .calculateWarmupWeight(5 * 60 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                .calculateWarmupWeight(5 * 60 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(50, AbstractLoadBalance
-            .calculateWarmupWeight(5 * 60 * 1000 + 23, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                .calculateWarmupWeight(5 * 60 * 1000 + 23, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(50, AbstractLoadBalance
-            .calculateWarmupWeight(5 * 60 * 1000 + 5999, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                .calculateWarmupWeight(5 * 60 * 1000 + 5999, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(51, AbstractLoadBalance
-            .calculateWarmupWeight(5 * 60 * 1000 + 6000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                .calculateWarmupWeight(5 * 60 * 1000 + 6000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(90, AbstractLoadBalance
-            .calculateWarmupWeight(9 * 60 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                .calculateWarmupWeight(9 * 60 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(98, AbstractLoadBalance
-            .calculateWarmupWeight(10 * 60 * 1000 - 12 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                .calculateWarmupWeight(10 * 60 * 1000 - 12 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(99, AbstractLoadBalance
-            .calculateWarmupWeight(10 * 60 * 1000 - 6 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                .calculateWarmupWeight(10 * 60 * 1000 - 6 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(100, AbstractLoadBalance
-            .calculateWarmupWeight(10 * 60 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                .calculateWarmupWeight(10 * 60 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
         Assert.assertEquals(100, AbstractLoadBalance
-            .calculateWarmupWeight(20 * 60 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
+                .calculateWarmupWeight(20 * 60 * 1000, Constants.DEFAULT_WARMUP, Constants.DEFAULT_WEIGHT));
     }
 
 }
