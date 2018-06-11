@@ -23,12 +23,14 @@ import com.alibaba.dubbo.rpc.cluster.Directory;
 
 /**
  * {@link FailoverClusterInvoker}
- *
+ *  默认的集群处理器
  */
 public class FailoverCluster implements Cluster {
 
     public final static String NAME = "failover";
 
+    // 这个方法是核心方法，最终绑定的，之后通过负载均衡获取invoker
+    // 这个是在引用端，也就是消费者端调用的方法
     @Override
     public <T> Invoker<T> join(Directory<T> directory) throws RpcException {
         return new FailoverClusterInvoker<T>(directory);

@@ -64,6 +64,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
         this.invokers = invokers;
     }
 
+    // 引用服务的逻辑
     @Override
     protected Result doInvoke(final Invocation invocation) throws Throwable {
         RpcInvocation inv = (RpcInvocation) invocation;
@@ -75,6 +76,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
         if (clients.length == 1) {
             currentClient = clients[0];
         } else {
+            // 取模随机选取
             currentClient = clients[index.getAndIncrement() % clients.length];
         }
         try {

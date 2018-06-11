@@ -39,6 +39,7 @@ public class ApplicationModel {
     private static final ConcurrentMap<String, ProviderModel> providedServices = new ConcurrentHashMap<String, ProviderModel>();
     /**
      * full qualified class name -> subscribe service
+     * 所有的服务都暂存在这个数据结构里面
      */
     private static final ConcurrentMap<String, ConsumerModel> consumedServices = new ConcurrentHashMap<String, ConsumerModel>();
 

@@ -57,6 +57,7 @@ import static com.alibaba.dubbo.common.utils.NetUtils.isInvalidLocalHost;
 
 /**
  * ReferenceConfig
+ * 每个标签对应一个 ReferenceConfig 实例
  *
  * @export
  */
@@ -66,8 +67,10 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
     private static final Protocol refprotocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
 
+    // FailoverCluster 默认的 工厂类
     private static final Cluster cluster = ExtensionLoader.getExtensionLoader(Cluster.class).getAdaptiveExtension();
 
+    // JavassistProxyFactory 默认的 代理工厂
     private static final ProxyFactory proxyFactory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
     private final List<URL> urls = new ArrayList<URL>();
     // interface name
@@ -80,6 +83,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     // method configs
     private List<MethodConfig> methods;
     // default config
+    // 为 <dubbo:reference> 标签的缺省值设置。
     private ConsumerConfig consumer;
     private String protocol;
     // interface proxy reference
@@ -111,6 +115,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     }
 
     public ReferenceConfig(Reference reference) {
+        // 通过注解进行配置
         appendAnnotation(Reference.class, reference);
     }
 
@@ -245,6 +250,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 }
             }
         }
+        // <dubbo:reference> 标签的缺省值设置
         if (consumer != null) {
             if (application == null) {
                 application = consumer.getApplication();
@@ -279,6 +285,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         checkStubAndMock(interfaceClass);
         Map<String, String> map = new HashMap<String, String>();
         Map<Object, Object> attributes = new HashMap<Object, Object>();
+        // key:side; value:consumer
         map.put(Constants.SIDE_KEY, Constants.CONSUMER_SIDE);
         map.put(Constants.DUBBO_VERSION_KEY, Version.getVersion());
         map.put(Constants.TIMESTAMP_KEY, String.valueOf(System.currentTimeMillis()));
@@ -291,6 +298,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 map.put("revision", revision);
             }
 
+            // 获取并且设置方法名
             String[] methods = Wrapper.getWrapper(interfaceClass).getMethodNames();
             if (methods.length == 0) {
                 logger.warn("NO method found in service interface " + interfaceClass.getName());
@@ -330,8 +338,10 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
         //attributes are stored by system context.
         StaticContext.getSystemContext().putAll(attributes);
+        // 核心方法
         ref = createProxy(map);
         ConsumerModel consumerModel = new ConsumerModel(getUniqueServiceName(), this, ref, interfaceClass.getMethods());
+        // 将生成好的 consumer配置放入到 ApplicationModel 的 缓存中
         ApplicationModel.initConsumerModel(getUniqueServiceName(), consumerModel);
     }
 
@@ -352,6 +362,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             isJvmRefer = isInjvm().booleanValue();
         }
 
+        // 如果是本地引用
         if (isJvmRefer) {
             URL url = new URL(Constants.LOCAL_PROTOCOL, NetUtils.LOCALHOST, 0, interfaceClass.getName()).addParameters(map);
             invoker = refprotocol.refer(interfaceClass, url);
@@ -360,6 +371,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             }
         } else {
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
+                // 可以引用多个服务，分隔符是 ；
                 String[] us = Constants.SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
                     for (String u : us) {
@@ -391,11 +403,14 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             }
 
             if (urls.size() == 1) {
+                // 因为是广播，所以只有一个url
+                // interface com.alibaba.dubbo.demo.DemoService
                 invoker = refprotocol.refer(interfaceClass, urls.get(0));
             } else {
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
                 URL registryURL = null;
                 for (URL url : urls) {
+                    // 根据 url 初始化 invokers
                     invokers.add(refprotocol.refer(interfaceClass, url));
                     if (Constants.REGISTRY_PROTOCOL.equals(url.getProtocol())) {
                         registryURL = url; // use last registry url
@@ -404,8 +419,12 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 if (registryURL != null) { // registry url is available
                     // use AvailableCluster only when register's cluster is available
                     URL u = registryURL.addParameter(Constants.CLUSTER_KEY, AvailableCluster.NAME);
+                    // 核心方法，负载均衡获取invoker
+                    // 实际角色是 FailoverClusterInvoker，FailoverClusterInvoker 调用join方法从 Directory服务中获取
+                    // 可用的invoker，之后调用
                     invoker = cluster.join(new StaticDirectory(u, invokers));
                 } else { // not a registry url
+                    // 核心方法
                     invoker = cluster.join(new StaticDirectory(invokers));
                 }
             }
