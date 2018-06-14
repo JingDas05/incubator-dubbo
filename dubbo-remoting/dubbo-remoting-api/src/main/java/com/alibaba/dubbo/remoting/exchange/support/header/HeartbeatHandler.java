@@ -27,6 +27,9 @@ import com.alibaba.dubbo.remoting.exchange.Request;
 import com.alibaba.dubbo.remoting.exchange.Response;
 import com.alibaba.dubbo.remoting.transport.AbstractChannelHandlerDelegate;
 
+/**
+ * 通道处理器，心跳处理器
+ */
 public class HeartbeatHandler extends AbstractChannelHandlerDelegate {
 
     private static final Logger logger = LoggerFactory.getLogger(HeartbeatHandler.class);
@@ -55,12 +58,15 @@ public class HeartbeatHandler extends AbstractChannelHandlerDelegate {
 
     @Override
     public void sent(Channel channel, Object message) throws RemotingException {
+        // 发送的时候设置时间戳
         setWriteTimestamp(channel);
+        // 真正执行逻辑的地方
         handler.sent(channel, message);
     }
 
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
+        // 接收的时候设置时间戳
         setReadTimestamp(channel);
         if (isHeartbeatRequest(message)) {
             Request req = (Request) message;
@@ -85,6 +91,7 @@ public class HeartbeatHandler extends AbstractChannelHandlerDelegate {
             }
             return;
         }
+        // 真正执行逻辑的地方
         handler.received(channel, message);
     }
 

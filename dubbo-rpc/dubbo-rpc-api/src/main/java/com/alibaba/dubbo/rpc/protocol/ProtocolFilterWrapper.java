@@ -43,6 +43,8 @@ public class ProtocolFilterWrapper implements Protocol {
         this.protocol = protocol;
     }
 
+    // key为 service.filter 或者 reference.filter
+    // group为 consumer 或者 provider
     private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String key, String group) {
         Invoker<T> last = invoker;
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);
@@ -92,6 +94,7 @@ public class ProtocolFilterWrapper implements Protocol {
         return protocol.getDefaultPort();
     }
 
+    //
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         // 如果协议是 registry 直接暴露服务

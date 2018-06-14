@@ -190,6 +190,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                         map.put(Constants.PID_KEY, String.valueOf(ConfigUtils.getPid()));
                     }
                     if (!map.containsKey("protocol")) {
+                        // 如果协议是 remote，才用 remote， 其次是 dubbo
                         if (ExtensionLoader.getExtensionLoader(RegistryFactory.class).hasExtension("remote")) {
                             map.put("protocol", "remote");
                         } else {
@@ -198,9 +199,10 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                     }
                     List<URL> urls = UrlUtils.parseURLs(address, map);
                     for (URL url : urls) {
+                        // 协议都是 registry，url的参数中设置registry = protocol
                         url = url.addParameter(Constants.REGISTRY_KEY, url.getProtocol());
                         url = url.setProtocol(Constants.REGISTRY_PROTOCOL);
-                        // 如果是 provider 才会添加到 注册列表中 registryList
+                        // 如果是 provider 或者是订阅服务的 才会添加到 注册列表 registryList 中
                         if ((provider && url.getParameter(Constants.REGISTER_KEY, true))
                                 || (!provider && url.getParameter(Constants.SUBSCRIBE_KEY, true))) {
                             registryList.add(url);
@@ -257,6 +259,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         return null;
     }
 
+    // 检测 interfaceClass 是否包含了 methods 列表中提供的方法
     protected void checkInterfaceAndMethods(Class<?> interfaceClass, List<MethodConfig> methods) {
         // interface cannot be null
         if (interfaceClass == null) {

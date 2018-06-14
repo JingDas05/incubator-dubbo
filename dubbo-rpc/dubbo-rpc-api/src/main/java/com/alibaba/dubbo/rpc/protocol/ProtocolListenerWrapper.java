@@ -32,7 +32,9 @@ import java.util.Collections;
 
 /**
  * ListenerProtocol
+ * 这个是暴露协议的核心类，如果是 registry
  */
+// TODO: 2018/6/14 协议暴露核心类，包装了其他协议的执行
 public class ProtocolListenerWrapper implements Protocol {
 
     private final Protocol protocol;
@@ -51,9 +53,13 @@ public class ProtocolListenerWrapper implements Protocol {
 
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        // 如果是 registry 协议，那么直接暴漏
+        // 其实这个绕了一圈，又去调用自己
+        // registryProtocol#export()  ----->
         if (Constants.REGISTRY_PROTOCOL.equals(invoker.getUrl().getProtocol())) {
             return protocol.export(invoker);
         }
+        // 如果是其他协议调用此方法，并且注册监听者
         return new ListenerExporterWrapper<T>(protocol.export(invoker),
                 Collections.unmodifiableList(ExtensionLoader.getExtensionLoader(ExporterListener.class)
                         .getActivateExtension(invoker.getUrl(), Constants.EXPORTER_LISTENER_KEY)));

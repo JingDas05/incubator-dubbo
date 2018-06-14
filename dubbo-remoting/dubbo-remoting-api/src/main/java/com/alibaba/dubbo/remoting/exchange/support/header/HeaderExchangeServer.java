@@ -47,7 +47,8 @@ public class HeaderExchangeServer implements ExchangeServer {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-    // 初始化定时线程池
+    // 定时 线程池 用法
+    // 心跳 核心方法
     private final ScheduledExecutorService scheduled = Executors.newScheduledThreadPool(1,
             new NamedThreadFactory(
                     "dubbo-remoting-server-heartbeat",
@@ -65,7 +66,9 @@ public class HeaderExchangeServer implements ExchangeServer {
             throw new IllegalArgumentException("server == null");
         }
         this.server = server;
+        // 从url中获取心跳间隔时间
         this.heartbeat = server.getUrl().getParameter(Constants.HEARTBEAT_KEY, 0);
+        // 默认3倍心跳时间
         this.heartbeatTimeout = server.getUrl().getParameter(Constants.HEARTBEAT_TIMEOUT_KEY, heartbeat * 3);
         if (heartbeatTimeout < heartbeat * 2) {
             throw new IllegalStateException("heartbeatTimeout < heartbeatInterval * 2");
@@ -258,13 +261,15 @@ public class HeaderExchangeServer implements ExchangeServer {
         stopHeartbeatTimer();
         if (heartbeat > 0) {
             heartbeatTimer = scheduled.scheduleWithFixedDelay(
-                    new HeartBeatTask(new HeartBeatTask.ChannelProvider() {
-                        @Override
-                        public Collection<Channel> getChannels() {
-                            return Collections.unmodifiableCollection(
-                                    HeaderExchangeServer.this.getChannels());
-                        }
-                    }, heartbeat, heartbeatTimeout),
+                    new HeartBeatTask(
+                            // 这个地方用lambda更好一些，传入ChannelProvider， Channels从现在的 getChannels获取
+                            new HeartBeatTask.ChannelProvider() {
+                                @Override
+                                public Collection<Channel> getChannels() {
+                                    return Collections.unmodifiableCollection(
+                                            HeaderExchangeServer.this.getChannels());
+                                }
+                            }, heartbeat, heartbeatTimeout),
                     heartbeat, heartbeat, TimeUnit.MILLISECONDS);
         }
     }

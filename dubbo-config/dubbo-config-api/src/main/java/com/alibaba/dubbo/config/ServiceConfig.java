@@ -71,14 +71,18 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     private static final long serialVersionUID = 3033787999037024738L;
 
-    // 获取协议，默认是dubbo协议
+    // 获取协议，默认是 dubbo协议
     private static final Protocol protocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
-
+    // 默认动态代理工厂 JavassistProxyFactory
     private static final ProxyFactory proxyFactory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
 
     private static final Map<String, Integer> RANDOM_PORT_MAP = new HashMap<String, Integer>();
 
-    private static final ScheduledExecutorService delayExportExecutor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("DubboServiceDelayExporter", true));
+    // 定时 线程池 用法
+    // 如果是延时的话，新开一个线程去执行暴露接口
+    // 生成ScheduledExecutorService最终调用的ThreadPoolExecutor
+    private static final ScheduledExecutorService delayExportExecutor = Executors.newSingleThreadScheduledExecutor(
+            new NamedThreadFactory("DubboServiceDelayExporter", true));
     private final List<URL> urls = new ArrayList<URL>();
     private final List<Exporter<?>> exporters = new ArrayList<Exporter<?>>();
     // interface type
@@ -93,6 +97,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     private String path;
     // method configuration
     private List<MethodConfig> methods;
+    // 如果serviceConfig的标签没有，默认用下面的配置
     private ProviderConfig provider;
     private transient volatile boolean exported;
 
@@ -236,6 +241,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             throw new IllegalStateException("<dubbo:service interface=\"\" /> interface not allow null!");
         }
         checkDefault();
+        // 配置覆盖逻辑
         if (provider != null) {
             if (application == null) {
                 application = provider.getApplication();
@@ -288,6 +294,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
         // 查找 本地实现方法
         if (local != null) {
+            // 本地实现方法的名字默认是 interfaceName + "Local"
             if ("true".equals(local)) {
                 local = interfaceName + "Local";
             }
@@ -379,6 +386,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
         // 参数
         Map<String, String> map = new HashMap<String, String>();
+        // 设置终端类型
         map.put(Constants.SIDE_KEY, Constants.PROVIDER_SIDE);
         map.put(Constants.DUBBO_VERSION_KEY, Version.getVersion());
         map.put(Constants.TIMESTAMP_KEY, String.valueOf(System.currentTimeMillis()));
@@ -465,6 +473,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 logger.warn("NO method found in service interface " + interfaceClass.getName());
                 map.put(Constants.METHODS_KEY, Constants.ANY_VALUE);
             } else {
+                // 设置接口方法列表
                 map.put(Constants.METHODS_KEY, StringUtils.join(new HashSet<String>(Arrays.asList(methods)), ","));
             }
         }
@@ -476,6 +485,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 map.put(Constants.TOKEN_KEY, token);
             }
         }
+        // 如果是本地协议就不注册了
         if (Constants.LOCAL_PROTOCOL.equals(protocolConfig.getName())) {
             protocolConfig.setRegister(false);
             map.put("notify", "false");
@@ -486,6 +496,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             contextPath = provider.getContextpath();
         }
 
+        // 本地暴露的 ip 以及 port
         String host = this.findConfigedHosts(protocolConfig, registryURLs, map);
         Integer port = this.findConfigedPorts(protocolConfig, name, map);
         // dubbo-demo provider 中的值为
@@ -510,6 +521,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
             // export to local if the config is not remote (export to remote only when config is remote)
             if (!Constants.SCOPE_REMOTE.toString().equalsIgnoreCase(scope)) {
+                // provider 中 先暴露本地，再去暴露注册中心
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)
@@ -526,7 +538,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
                         // 如果没有设置 dynamic，设置 dynamic
                         url = url.addParameterIfAbsent(Constants.DYNAMIC_KEY, registryURL.getParameter(Constants.DYNAMIC_KEY));
-                        // 添加 监测仪
+                        // 添加 监测仪,监控模块 配置在 registry 中
                         URL monitorUrl = loadMonitor(registryURL);
                         if (monitorUrl != null) {
                             url = url.addParameterAndEncoded(Constants.MONITOR_KEY, monitorUrl.toFullString());
@@ -538,13 +550,15 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         // 获取执行者 Invoker
                         // registryURL添加参数 export,值为要暴露的 服务url,utf-8 路径编码
                         // invoker 只是动态代理，而没有设计到暴露服务
+                        // registryURL 在 invoker 里面只是个查询的作用，下面export() 里面就用了
                         Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(Constants.EXPORT_KEY, url.toFullString()));
                         // 创建 Invoker 封装类
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
                         // ********************************************************************************************************
-                        // 暴露服务
+                        // 暴露服务，
                         Exporter<?> exporter = protocol.export(wrapperInvoker);
+                        // 每一个注册地址，一个Exporter
                         exporters.add(exporter);
                     }
                 } else {
@@ -875,6 +889,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         this.protocols = convertProviderToProtocol(providers);
     }
 
+    // 组名+接口名+版本号
     @Parameter(excluded = true)
     public String getUniqueServiceName() {
         StringBuilder buf = new StringBuilder();

@@ -99,6 +99,7 @@ public abstract class AbstractConfig implements Serializable {
         return value;
     }
 
+    // 从配置文件中获取配置属性
     protected static void appendProperties(AbstractConfig config) {
         if (config == null) {
             return;
