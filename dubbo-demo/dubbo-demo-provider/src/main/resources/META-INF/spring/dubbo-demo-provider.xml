@@ -22,24 +22,59 @@
        http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
 
     <!-- provider's application name, used for tracing dependency relationship -->
-    <dubbo:application name="demo-provider"/>
+    <dubbo:application name="demoProvider"/>
 
     <!-- use multicast registry center to export service -->
-    <dubbo:registry address="multicast://224.5.6.7:1234"/>
+    <!--<dubbo:registry address="multicast://224.5.6.7:1234"/>-->
+    <dubbo:registry
+            id="zookeeperDemo"
+            address="zookeeper://127.0.0.1:2181"
+            timeout="30000"/>
 
-    <!-- use dubbo protocol to export service on port 20880 -->
-    <dubbo:protocol name="dubbo" port="20880"/>
+    <!--dubbo协议缺省端口为20880，rmi协议缺省端口为1099，http和hessian协议缺省端口为80；如果配置为-1 或者 没有配置port，
+    则会分配一个没有被占用的端口。Dubbo 2.4.0+，分配的端口在协议缺省端口的基础上增长，确保端口段可控。-->
+    <!--threads：服务线程池大小-->
+    <!--iothreads = cpu个数+1-->
+    <!--payload:请求及响应数据包大小限制，单位：字节. 88388608=8M-->
+    <!--serialization: dubbo协议缺省为hessian2，rmi协议缺省为java，http协议缺省为json-->
+    <!--register;该协议的服务是否注册到注册中心-->
+    <!--buffer: 网络读写缓冲区大小 8192 = 8M-->
+    <dubbo:protocol
+            id="protocolDemo"
+            name="dubbo"
+            threadpool="fixed"
+            threads="100"
+            iothreads="9"
+            accepts="0"
+            payload="88388608"
+            serialization="hessian2"
+            dispatcher="all"
+            register="true"
+            buffer="8192"
+            port="20880"/>
 
     <!-- service implementation, as same as regular local bean -->
-    <bean id="demoService" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl"/>
+    <bean id="demoService"
+          class="com.alibaba.dubbo.demo.provider.DemoServiceImpl"/>
 
     <!-- service implementation, as same as regular local bean -->
-    <bean id="demoService2" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl2"/>
+    <bean id="demoService2"
+          class="com.alibaba.dubbo.demo.provider.DemoServiceImpl2"/>
 
-    <!-- declare the service interface to be exported -->
-    <dubbo:service interface="com.alibaba.dubbo.demo.DemoService" ref="demoService"/>
+    <!-- 声明暴露的接口 -->
+    <dubbo:service
+            registry="zookeeperDemo"
+            protocol="protocolDemo"
+            interface="com.alibaba.dubbo.demo.DemoService"
+            ref="demoService"
+            timeout="30000"/>
 
-    <!-- declare the service interface to be exported -->
-    <dubbo:service interface="com.alibaba.dubbo.demo.DemoService2" ref="demoService2"/>
+    <!-- 声明暴露的接口 -->
+    <dubbo:service
+            registry="zookeeperDemo"
+            protocol="protocolDemo"
+            interface="com.alibaba.dubbo.demo.DemoService2"
+            ref="demoService2"
+            timeout="30000"/>
 
 </beans>

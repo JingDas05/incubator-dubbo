@@ -69,6 +69,7 @@ public abstract class AbstractRegistry implements Registry {
     private final boolean syncSaveFile;
     private final AtomicLong lastCacheChanged = new AtomicLong();
     private final Set<URL> registered = new ConcurrentHashSet<URL>();
+    // 前面是订阅的URL，后面是 需要通知的Set<NotifyListener>
     private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
     // map 的 key 是 category；
     private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<URL, Map<String, List<URL>>>();
@@ -79,11 +80,14 @@ public abstract class AbstractRegistry implements Registry {
     public AbstractRegistry(URL url) {
         setUrl(url);
         // Start file save timer
+        // 是否保存注册信息到文件
         syncSaveFile = url.getParameter(Constants.REGISTRY_FILESAVE_SYNC_KEY, false);
+        // 构建文件名字
         String filename = url.getParameter(Constants.FILE_KEY, System.getProperty("user.home") + "/.dubbo/dubbo-registry-" + url.getParameter(Constants.APPLICATION_KEY) + "-" + url.getAddress() + ".cache");
         File file = null;
         if (ConfigUtils.isNotEmpty(filename)) {
             file = new File(filename);
+            // 如果文件不存在，试着创建文件缓存
             if (!file.exists() && file.getParentFile() != null && !file.getParentFile().exists()) {
                 if (!file.getParentFile().mkdirs()) {
                     throw new IllegalArgumentException("Invalid registry store file " + file + ", cause: Failed to create directory " + file.getParentFile() + "!");
@@ -93,9 +97,11 @@ public abstract class AbstractRegistry implements Registry {
         this.file = file;
         // 从 file 中获取 properties
         loadProperties();
+        // 通知 备份
         notify(url.getBackupUrls());
     }
 
+    // 处理 urls 为空的情况
     protected static List<URL> filterEmpty(URL url, List<URL> urls) {
         if (urls == null || urls.isEmpty()) {
             List<URL> result = new ArrayList<URL>(1);
@@ -301,6 +307,7 @@ public abstract class AbstractRegistry implements Registry {
         }
         Set<NotifyListener> listeners = subscribed.get(url);
         if (listeners == null) {
+            // 如果为空初始化
             subscribed.putIfAbsent(url, new ConcurrentHashSet<NotifyListener>());
             listeners = subscribed.get(url);
         }
@@ -357,11 +364,10 @@ public abstract class AbstractRegistry implements Registry {
         for (Map.Entry<URL, Set<NotifyListener>> entry : getSubscribed().entrySet()) {
             URL url = entry.getKey();
 
-            // 查找urls中的首条 和 注册的url一致的
+            // 查找注册订阅的url中 和 urls中的首条 一致的
             if (!UrlUtils.isMatch(url, urls.get(0))) {
                 continue;
             }
-
             // 循环遍历 监听者，进行通知
             Set<NotifyListener> listeners = entry.getValue();
             if (listeners != null) {
@@ -376,6 +382,9 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    // url 是 订阅的url
+    // listener 是 订阅的url的通知器
+    // urls是 registry url 中的backup字段的值
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
             throw new IllegalArgumentException("notify url == null");
@@ -389,6 +398,7 @@ public abstract class AbstractRegistry implements Registry {
             return;
         }
         if (logger.isInfoEnabled()) {
+            // 订阅的时候会提供NotifyListener
             logger.info("Notify urls for subscribe url " + url + ", urls: " + urls);
         }
         Map<String, List<URL>> result = new HashMap<String, List<URL>>();

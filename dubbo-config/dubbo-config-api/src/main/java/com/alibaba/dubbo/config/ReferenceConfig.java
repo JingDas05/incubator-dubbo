@@ -403,6 +403,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             }
 
             if (urls.size() == 1) {
+                // 核心方法
                 // 因为是广播，所以只有一个url
                 // interface com.alibaba.dubbo.demo.DemoService
                 invoker = refprotocol.refer(interfaceClass, urls.get(0));

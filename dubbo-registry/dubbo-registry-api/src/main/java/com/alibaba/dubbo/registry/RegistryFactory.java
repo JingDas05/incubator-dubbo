@@ -22,6 +22,7 @@ import com.alibaba.dubbo.common.extension.SPI;
 
 /**
  * RegistryFactory. (SPI, Singleton, ThreadSafe)
+ * 根据协议获取注册工厂
  *
  * @see com.alibaba.dubbo.registry.support.AbstractRegistryFactory
  */

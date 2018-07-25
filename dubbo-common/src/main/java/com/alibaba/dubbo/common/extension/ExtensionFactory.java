@@ -24,6 +24,7 @@ public interface ExtensionFactory {
 
     /**
      * Get extension.
+     * 根据 名称和类型获取 实例
      *
      * @param type object type.
      * @param name object name.

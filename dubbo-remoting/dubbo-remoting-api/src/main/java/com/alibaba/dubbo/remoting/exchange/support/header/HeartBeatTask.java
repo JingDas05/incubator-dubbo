@@ -60,6 +60,7 @@ final class HeartBeatTask implements Runnable {
                             || (lastWrite != null && now - lastWrite > heartbeat)) {
                         Request req = new Request();
                         req.setVersion("2.0.0");
+                        // 双工？
                         req.setTwoWay(true);
                         req.setEvent(Request.HEARTBEAT_EVENT);
                         channel.send(req);
