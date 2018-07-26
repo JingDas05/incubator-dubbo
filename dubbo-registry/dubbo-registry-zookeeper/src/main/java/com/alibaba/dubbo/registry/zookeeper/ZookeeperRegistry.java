@@ -130,7 +130,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
     @Override
     protected void doSubscribe(final URL url, final NotifyListener listener) {
         try {
-            // 如果订阅的全部接口
+            // 如果订阅的全部接口,duboo-admin, 就会走这个方法，订阅了所有，也就是监听所有
             if (Constants.ANY_VALUE.equals(url.getServiceInterface())) {
                 String root = toRootPath();
                 ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);

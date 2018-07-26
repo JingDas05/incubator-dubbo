@@ -353,7 +353,7 @@ public class UrlUtils {
         }
     }
 
-    // 确定 providerUrl 是否是  consumerUrl 提供者
+    // 比较不同地址的 consumerUrl 和 providerUrl 是否提供相同的服务
     public static boolean isMatch(URL consumerUrl, URL providerUrl) {
         String consumerInterface = consumerUrl.getServiceInterface();
         String providerInterface = providerUrl.getServiceInterface();
