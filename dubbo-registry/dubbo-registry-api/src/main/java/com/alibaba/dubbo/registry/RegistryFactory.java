@@ -43,6 +43,7 @@ public interface RegistryFactory {
      * @param url Registry address, is not allowed to be empty
      * @return Registry reference, never return empty value
      */
+    // 根据 url 中protocol字段的值获取具体的插件 DubboRegistry DubboRegistry RedisRegistry MulticastRegistry ZookeeperRegistry
     @Adaptive({"protocol"})
     Registry getRegistry(URL url);
 

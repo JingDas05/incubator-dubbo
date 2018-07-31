@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// 封装了 Provider 的相关配置
 public class ProviderModel {
     private final String serviceName;
     private final Object serviceInstance;
@@ -84,6 +85,7 @@ public class ProviderModel {
             method.setAccessible(true);
 
             List<ProviderMethodModel> methodModels = methods.get(method.getName());
+            // 如果为空，就初始化
             if (methodModels == null) {
                 methodModels = new ArrayList<ProviderMethodModel>(1);
                 methods.put(method.getName(), methodModels);

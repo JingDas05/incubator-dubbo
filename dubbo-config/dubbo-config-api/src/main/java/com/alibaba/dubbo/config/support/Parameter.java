@@ -24,6 +24,7 @@ import java.lang.annotation.Target;
 
 /**
  * Parameter
+ * 用在 applicationConfig  以及 serviceConfig的方法上，这样提取默认参数时，优先以注解中的参数为主
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

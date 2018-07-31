@@ -234,10 +234,12 @@ public class DubboProtocol extends AbstractProtocol {
     // 核心方法，向注册中心暴露服务
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
-        // 生成Invoker时，并没有使用url，暴露服务时开始使用url
-        // dubbo-demo provider url = dubbo://192.168.73.1:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&
-        // application=demo-provider&bind.ip=192.168.73.1&bind.port=20880&dubbo=2.0.0&generic=false&
-        // interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=10224&qos.port=22222&side=provider&timestamp=1527576165704
+
+        // dubbo://192.168.73.1:20880/com.alibaba.dubbo.demo.DemoService?accepts=0&anyhost=true&application=demoProvider&
+        // bind.ip=192.168.73.1&bind.port=20880&buffer=8192&dispatcher=all&dubbo=2.0.0&generic=false&
+        // interface=com.alibaba.dubbo.demo.DemoService&iothreads=9&methods=sayHello&payload=88388608&pid=12208&
+        // qos.port=22222&register=true&serialization=hessian2&side=provider&threadpool=fixed&threads=100&
+        // timeout=30000&timestamp=1533009060843
         URL url = invoker.getUrl();
 
         // export service.

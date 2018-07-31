@@ -23,6 +23,7 @@ import com.alibaba.dubbo.common.extension.SPI;
 
 /**
  * ProxyFactory. (API/SPI, Singleton, ThreadSafe)
+ * 获取 Invoker 核心类，常用 ThriftInvoker InjvmInvoker DubboInvoker
  */
 @SPI("javassist")
 public interface ProxyFactory {

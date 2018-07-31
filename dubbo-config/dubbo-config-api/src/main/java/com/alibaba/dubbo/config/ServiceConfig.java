@@ -304,6 +304,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
+            // 本地方法需要实现interfaceClass
             if (!interfaceClass.isAssignableFrom(localClass)) {
                 throw new IllegalStateException("The local implementation class " + localClass.getName() + " not implement interface " + interfaceName);
             }
@@ -332,6 +333,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
         doExportUrls();
         ProviderModel providerModel = new ProviderModel(getUniqueServiceName(), this, ref);
+        // 服务名 = getUniqueServiceName()
         ApplicationModel.initProviderModel(getUniqueServiceName(), providerModel);
     }
 
@@ -369,8 +371,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
-        // eg: dubbo-demo的provider中是 registry://224.5.6.7:1234/com.alibaba.dubbo.registry.RegistryService?
-        // application=demo-provider&dubbo=2.0.0&pid=9528&qos.port=22222&registry=multicast&timestamp=1527561658106
+        // registry://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demoProvider&dubbo=2.0.0&
+        // pid=436&qos.port=22222&registry=zookeeper&timeout=30000&timestamp=1532685571509
         List<URL> registryURLs = loadRegistries(true);
         for (ProtocolConfig protocolConfig : protocols) {
             // 暴露服务到注册中心
@@ -378,6 +380,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
     }
 
+    // 暴露以及注册服务
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
         String name = protocolConfig.getName();
         // 默认协议 dubbo
@@ -485,7 +488,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 map.put(Constants.TOKEN_KEY, token);
             }
         }
-        // 如果是本地协议就不注册了
+        // 如果是 本地协议 就不注册了
         if (Constants.LOCAL_PROTOCOL.equals(protocolConfig.getName())) {
             protocolConfig.setRegister(false);
             map.put("notify", "false");
@@ -499,26 +502,26 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         // 本地暴露的 ip 以及 port
         String host = this.findConfigedHosts(protocolConfig, registryURLs, map);
         Integer port = this.findConfigedPorts(protocolConfig, name, map);
-        // dubbo-demo provider 中的值为
-        // dubbo://192.168.73.1:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&
-        // bind.ip=192.168.73.1&bind.port=20880&dubbo=2.0.0&generic=false&interface=com.alibaba.dubbo.demo.DemoService
-        // &methods=sayHello&pid=1472&qos.port=22222&side=provider&timestamp=1527562577459
-        // 本地服务地址
+        // demoProvider 中的值为 服务地址
+        // dubbo://192.168.73.1:20880/com.alibaba.dubbo.demo.DemoService?accepts=0&anyhost=true&application=demoProvider
+        // &bind.ip=192.168.73.1&bind.port=20880&buffer=8192&dispatcher=all&dubbo=2.0.0&generic=false&
+        // interface=com.alibaba.dubbo.demo.DemoService&iothreads=9&methods=sayHello&payload=88388608&pid=9824&
+        // qos.port=22222&register=true&serialization=hessian2&side=provider&threadpool=fixed&threads=100&timeout=30000&timestamp=1533007190012
         URL url = new URL(name, host, port, (contextPath == null || contextPath.length() == 0 ? "" : contextPath + "/") + path, map);
 
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                 .hasExtension(url.getProtocol())) {
+            // dubbo://192.168.73.1:20880/com.alibaba.dubbo.demo.DemoService?accepts=0&anyhost=true&
+            // application=demoProvider&bind.ip=192.168.73.1&bind.port=20880&buffer=8192&dispatcher=all&dubbo=2.0.0&
+            // generic=false&interface=com.alibaba.dubbo.demo.DemoService&iothreads=9&methods=sayHello&payload=88388608&
+            // pid=11404&qos.port=22222&register=true&serialization=hessian2&side=provider&threadpool=fixed&threads=100
+            // &timeout=30000&timestamp=1533007539017
             url = ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                     .getExtension(url.getProtocol()).getConfigurator(url).configure(url);
-            // dubbo-demo provider的值为 dubbo://192.168.73.1:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true
-            // &application=demo-provider&bind.ip=192.168.73.1&bind.port=20880&dubbo=2.0.0&generic=false&interface=
-            // com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=1472&qos.port=22222&side=provider&timestamp=1527562577459
         }
-
         String scope = url.getParameter(Constants.SCOPE_KEY);
         // don't export when none is configured
         if (!Constants.SCOPE_NONE.toString().equalsIgnoreCase(scope)) {
-
             // export to local if the config is not remote (export to remote only when config is remote)
             if (!Constants.SCOPE_REMOTE.toString().equalsIgnoreCase(scope)) {
                 // provider 中 先暴露本地，再去暴露注册中心
@@ -532,9 +535,6 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 if (registryURLs != null && !registryURLs.isEmpty()) {
                     // 向各个注册中心，注册自己的服务
                     for (URL registryURL : registryURLs) {
-                        // registryURL
-                        // registry://224.5.6.7:1234/com.alibaba.dubbo.registry.RegistryService?application=demo-provider&dubbo=2.0.0
-                        // &pid=8348&qos.port=22222&registry=multicast&timestamp=1527564096365
 
                         // 如果没有设置 dynamic，设置 dynamic
                         url = url.addParameterIfAbsent(Constants.DYNAMIC_KEY, registryURL.getParameter(Constants.DYNAMIC_KEY));
@@ -551,12 +551,23 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         // registryURL添加参数 export,值为要暴露的 服务url,utf-8 路径编码
                         // invoker 只是动态代理，而没有设计到暴露服务
                         // registryURL 在 invoker 里面只是个查询的作用，下面export() 里面就用了
+
+                        // registry://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demoProvider&dubbo=2.0.0&
+
+                        // 注意这个 export
+
+                        // export=dubbo%3A%2F%2F192.168.73.1%3A20880%2Fcom.alibaba.dubbo.demo.DemoService%3Faccepts%3D0%26anyhost%3Dtrue%26application%3D
+                        // demoProvider%26bind.ip%3D192.168.73.1%26bind.port%3D20880%26buffer%3D8192%26dispatcher%3Dall%26dubbo%3D2.0.0%26generic%3Dfalse%
+                        // 26interface%3Dcom.alibaba.dubbo.demo.DemoService%26iothreads%3D9%26methods%3DsayHello%26payload%3D88388608%26pid%3D16108%26qos.port%
+                        // 3D22222%26register%3Dtrue%26serialization%3Dhessian2%26side%3Dprovider%26threadpool%3Dfixed%26threads%3D100%26timeout%3D30000%26timestamp
+                        // %3D1533016811300&pid=16108&qos.port=22222&registry=zookeeper&timeout=30000&timestamp=1533016811284
+
                         Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(Constants.EXPORT_KEY, url.toFullString()));
                         // 创建 Invoker 封装类
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
                         // ********************************************************************************************************
-                        // 暴露服务，
+                        // 使用 RegistryProtocol 和 DubboProtocol  暴露服务（包括 dubbo协议以及 注册zk）
                         Exporter<?> exporter = protocol.export(wrapperInvoker);
                         // 每一个注册地址，一个Exporter
                         exporters.add(exporter);
@@ -578,10 +589,15 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void exportLocal(URL url) {
         if (!Constants.LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
+            // injvm://127.0.0.1/com.alibaba.dubbo.demo.DemoService?accepts=0&anyhost=true&application=demoProvider&bind.ip=192.168.73.1&
+            // bind.port=20880&buffer=8192&dispatcher=all&dubbo=2.0.0&generic=false&interface=com.alibaba.dubbo.demo.DemoService&
+            // iothreads=9&methods=sayHello&payload=88388608&pid=2120&qos.port=22222&register=true&serialization=hessian2&
+            // side=provider&threadpool=fixed&threads=100&timeout=30000&timestamp=1533008370942
             URL local = URL.valueOf(url.toFullString())
                     .setProtocol(Constants.LOCAL_PROTOCOL)
                     .setHost(LOCALHOST)
                     .setPort(0);
+            // 暂存当前服务 Class文件
             ServiceClassHolder.getInstance().pushServiceClass(getServiceClass(ref));
             Exporter<?> exporter = protocol.export(
                     proxyFactory.getInvoker(ref, (Class) interfaceClass, local));

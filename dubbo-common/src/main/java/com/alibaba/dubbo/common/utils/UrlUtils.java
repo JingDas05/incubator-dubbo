@@ -27,6 +27,9 @@ import java.util.Set;
 
 public class UrlUtils {
 
+    // 根据 defaults 参数，构建 address
+    // 最终如下，zookeeper://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demoProvider&dubbo=2.0.0
+    // &pid=712&qos.port=22222&timeout=30000&timestamp=1533006549175
     public static URL parseURL(String address, Map<String, String> defaults) {
         if (address == null || address.length() == 0) {
             return null;
@@ -124,6 +127,7 @@ public class UrlUtils {
         return u;
     }
 
+    // 根据 defaults 生成最终的 URL
     public static List<URL> parseURLs(String address, Map<String, String> defaults) {
         if (address == null || address.length() == 0) {
             return null;

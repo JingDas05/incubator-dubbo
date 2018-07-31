@@ -168,6 +168,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         // 循环遍历指定的注册中心
         if (registries != null && !registries.isEmpty()) {
             for (RegistryConfig config : registries) {
+                // address =  eg: zookeeper://127.0.0.1:2181
                 String address = config.getAddress();
                 if (address == null || address.length() == 0) {
                     // 如果地址为空，就用本地的
@@ -178,9 +179,11 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                 if (sysaddress != null && sysaddress.length() > 0) {
                     address = sysaddress;
                 }
+                // 如果注册地址存在，且 注册地址可用（不等于 N/A）
                 if (address.length() > 0 && !RegistryConfig.NO_AVAILABLE.equalsIgnoreCase(address)) {
+                    // 构建默认参数
                     Map<String, String> map = new HashMap<String, String>();
-                    // map中添加 application name
+                    // 将 application config 属性字段添加到map中，key - 变成 .
                     appendParameters(map, application);
                     appendParameters(map, config);
                     map.put("path", RegistryService.class.getName());

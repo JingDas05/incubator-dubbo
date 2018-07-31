@@ -291,6 +291,7 @@ public class ConfigUtils {
         return properties;
     }
 
+    // 获取当前线程id
     public static int getPid() {
         if (PID < 0) {
             try {

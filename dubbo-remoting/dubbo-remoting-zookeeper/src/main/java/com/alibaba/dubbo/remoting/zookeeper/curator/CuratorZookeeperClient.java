@@ -70,6 +70,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
         }
     }
 
+    // 创建永久路径
     @Override
     public void createPersistent(String path) {
         try {
@@ -80,6 +81,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
         }
     }
 
+    // 创建临时路径
     @Override
     public void createEphemeral(String path) {
         try {

@@ -120,20 +120,35 @@ public class RegistryProtocol implements Protocol {
     }
 
     public void register(URL registryUrl, URL registedProviderUrl) {
+        // 根据 registryUrl 获取 ZookeeperRegistry
         Registry registry = registryFactory.getRegistry(registryUrl);
+        // zookeeper 注册服务
         registry.register(registedProviderUrl);
     }
 
     // 当协议是 registry时，调用此接口
+    // 首先 doLocalExport() 暴露本地服务，
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
-        //export invoker
+        // export invoker
+        // 首先暴露本地服务，默认dubbo协议
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker);
 
+        // zookeeper://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demoProvider&dubbo=2.0.0&
+        // export=dubbo%3A%2F%2F192.168.73.1%3A20880%2Fcom.alibaba.dubbo.demo.DemoService%3Faccepts%3D0%26anyhost%3Dtrue%26application%3D
+        // demoProvider%26bind.ip%3D192.168.73.1%26bind.port%3D20880%26buffer%3D8192%26dispatcher%3Dall%26dubbo%3D2.0.0%26generic%3Dfalse%26
+        // interface%3Dcom.alibaba.dubbo.demo.DemoService%26iothreads%3D9%26methods%3DsayHello%26payload%3D88388608%26pid%3D4204%26
+        // qos.port%3D22222%26register%3Dtrue%26serialization%3Dhessian2%26side%3Dprovider%26threadpool%3Dfixed%26threads%3D100%26
+        // timeout%3D30000%26timestamp%3D1533017378252&pid=4204&qos.port=22222&timeout=30000&timestamp=1533017378233
         URL registryUrl = getRegistryUrl(originInvoker);
 
         //registry provider
+        // 获取 Zookeeper 客户端 ZookeeperRegistry
         final Registry registry = getRegistry(originInvoker);
+        //dubbo://192.168.73.1:20880/com.alibaba.dubbo.demo.DemoService?accepts=0&anyhost=true&application=demoProvider&
+        // buffer=8192&dispatcher=all&dubbo=2.0.0&generic=false&interface=com.alibaba.dubbo.demo.DemoService&iothreads=9&
+        // methods=sayHello&payload=88388608&pid=17860&register=true&serialization=hessian2&side=provider&threadpool=fixed&
+        // threads=100&timeout=30000&timestamp=1533018076778
         final URL registedProviderUrl = getRegistedProviderUrl(originInvoker);
 
         //to judge to delay publish whether or not
@@ -147,7 +162,12 @@ public class RegistryProtocol implements Protocol {
         }
 
         // Subscribe the override data
+        // TODO: 2018/7/31 有时间需要仔细研读
         // FIXME When the provider subscribes, it will affect the scene : a certain JVM exposes the service and call the same service. Because the subscribed is cached key with the name of the service, it causes the subscription information to cover.
+        // provider://192.168.73.1:20880/com.alibaba.dubbo.demo.DemoService?accepts=0&anyhost=true&application=demoProvider&
+        // buffer=8192&category=configurators&check=false&dispatcher=all&dubbo=2.0.0&generic=false&
+        // interface=com.alibaba.dubbo.demo.DemoService&iothreads=9&methods=sayHello&payload=88388608&
+        // pid=10600&register=true&serialization=hessian2&side=provider&threadpool=fixed&threads=100&timeout=30000&timestamp=1533018276879
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(registedProviderUrl);
         final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
@@ -164,7 +184,6 @@ public class RegistryProtocol implements Protocol {
             synchronized (bounds) {
                 exporter = (ExporterChangeableWrapper<T>) bounds.get(key);
                 if (exporter == null) {
-                    // 这个地方设置invoker 的 url 为要暴露的地址，也及
                     final Invoker<?> invokerDelegete = new InvokerDelegete<T>(originInvoker, getProviderUrl(originInvoker));
                     exporter = new ExporterChangeableWrapper<T>((Exporter<T>) protocol.export(invokerDelegete), originInvoker);
                     bounds.put(key, exporter);

@@ -38,6 +38,7 @@ public class RegistryConfig extends AbstractConfig {
     // register center address
     // 注册中心服务器地址，如果地址没有端口缺省为9090，同一集群内的多个地址用逗号分隔，
     // 如：ip:port,ip:port，不同集群的注册中心，请配置多个<dubbo:registry>标签
+    //
     private String address;
 
     // username to login register center
