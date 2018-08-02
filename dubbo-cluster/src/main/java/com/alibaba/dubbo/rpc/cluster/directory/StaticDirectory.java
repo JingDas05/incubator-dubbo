@@ -25,6 +25,8 @@ import com.alibaba.dubbo.rpc.cluster.Router;
 import java.util.List;
 
 /**
+ *
+ * 静态目录
  * StaticDirectory
  *
  */

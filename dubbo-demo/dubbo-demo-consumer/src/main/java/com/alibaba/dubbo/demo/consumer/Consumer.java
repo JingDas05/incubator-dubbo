@@ -17,6 +17,7 @@
 package com.alibaba.dubbo.demo.consumer;
 
 import com.alibaba.dubbo.demo.DemoService;
+import com.alibaba.dubbo.demo.DemoService2;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class Consumer {
@@ -27,7 +28,10 @@ public class Consumer {
         System.setProperty("java.net.preferIPv4Stack", "true");
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"META-INF/spring/dubbo-demo-consumer.xml"});
         context.start();
+        // getBean() 或者 @Autowire 才能触发 ReferenceBean get()方法 -》 init()方法， 创建服务代理
         DemoService demoService = (DemoService) context.getBean("demoService"); // get remote service proxy
+        // 下面的注释掉了，所以不会创建远程调用的代理
+        //DemoService2 demoService2 = (DemoService2) context.getBean("demoService2"); // get remote service proxy
 
         while (true) {
             try {

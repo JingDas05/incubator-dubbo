@@ -23,14 +23,35 @@
 
     <!-- consumer's application name, used for tracing dependency relationship (not a matching criterion),
     don't set it same as provider -->
-    <dubbo:application name="demo-consumer"/>
+    <dubbo:application name="demoConsumer"/>
 
     <!-- use multicast registry center to discover service -->
     <!--<dubbo:registry address="multicast://224.5.6.7:1234"/>-->
-    <dubbo:registry id="zookeeper-demo" address="zookeeper://127.0.0.1:2181" />
+    <!--使用 zookeeper 注册中心-->
+    <dubbo:registry id="zookeeperDemo" address="zookeeper://127.0.0.1:2181"/>
 
     <!-- generate proxy for the remote service, then demoService can be used in the same way as the
     local regular interface -->
-    <dubbo:reference registry="zookeeper-demo" id="demoService" check="false" interface="com.alibaba.dubbo.demo.DemoService"/>
+    <dubbo:reference registry="zookeeperDemo" id="demoService" check="false"
+                     interface="com.alibaba.dubbo.demo.DemoService"
+                     mock="com.alibaba.dubbo.demo.mock.DemoServiceMock"/>
+
+    <!--registry check 用下面的默认配置-->
+    <dubbo:reference id="demoService2" interface="com.alibaba.dubbo.demo.DemoService2"/>
+
+    <!--服务消费者缺省值配置。配置类： com.alibaba.dubbo.config.ConsumerConfig。
+    同时该标签为 <dubbo:reference> 标签的缺省值设置。-->
+    <!--loadbalance  负载均衡策略，可选值：random,roundrobin,leastactive，分别表示：随机，轮循，最少活跃调用-->
+    <!--check  启动时检查提供者是否存在，true报错，false忽略-->
+    <!--mock 服务接口调用失败Mock实现类名，该Mock类必须有一个无参构造函数，与Local的区别在于，Local总是被执行，
+    而Mock只在出现非业务异常(比如超时，网络异常等)时执行，Local在远程调用之前执行，Mock在远程调用后执行。-->
+    <!--cluster 集群方式，可选：failover/failfast/failsafe/failback/forking-->
+    <dubbo:consumer
+            registry="zookeeperDemo"
+            check="false"
+            retries="0"
+            timeout="20000"
+            loadbalance="random"
+            cluster="failover"/>
 
 </beans>

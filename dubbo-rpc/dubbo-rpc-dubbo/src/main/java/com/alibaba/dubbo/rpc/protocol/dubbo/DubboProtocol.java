@@ -400,6 +400,7 @@ public class DubboProtocol extends AbstractProtocol {
                 referenceClientMap.remove(key);
             }
         }
+        // 如果没有缓存，创建新的客户端
         synchronized (key.intern()) {
             ExchangeClient exchangeClient = initClient(url);
             client = new ReferenceCountExchangeClient(exchangeClient, ghostClientMap);

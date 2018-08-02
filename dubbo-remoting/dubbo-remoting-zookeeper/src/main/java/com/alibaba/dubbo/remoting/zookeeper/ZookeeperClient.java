@@ -20,6 +20,7 @@ import com.alibaba.dubbo.common.URL;
 
 import java.util.List;
 
+// 操作zk 的核心类
 public interface ZookeeperClient {
 
     void create(String path, boolean ephemeral);

@@ -72,6 +72,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
     // JavassistProxyFactory 默认的 代理工厂
     private static final ProxyFactory proxyFactory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
+    // 引用服务列表
     private final List<URL> urls = new ArrayList<URL>();
     // interface name
     private String interfaceName;
@@ -187,6 +188,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         ref = null;
     }
 
+    // 核心方法，初始化一大批字段，尤其是 ref
     private void init() {
         if (initialized) {
             return;
@@ -308,6 +310,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             }
         }
         map.put(Constants.INTERFACE_KEY, interfaceName);
+        // 将应用里面的属性值添加到map中
         appendParameters(map, application);
         appendParameters(map, module);
         appendParameters(map, consumer, Constants.DEFAULT_KEY);
@@ -327,7 +330,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 checkAndConvertImplicitConfig(method, map, attributes);
             }
         }
-
+        // 如果没有设置要注册的 host, 就取本地的地址
         String hostToRegistry = ConfigUtils.getSystemProperty(Constants.DUBBO_IP_TO_REGISTRY);
         if (hostToRegistry == null || hostToRegistry.length() == 0) {
             hostToRegistry = NetUtils.getLocalHost();
@@ -338,7 +341,23 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
         //attributes are stored by system context.
         StaticContext.getSystemContext().putAll(attributes);
-        // 核心方法
+        // 核心方法，map参数如下：
+        //0 = {HashMap$Node@2025} "side" -> "consumer"
+        //1 = {HashMap$Node@2026} "default.cluster" -> "failover"
+        //2 = {HashMap$Node@2027} "register.ip" -> "192.168.73.1"
+        //3 = {HashMap$Node@2028} "methods" -> "sayHello"
+        //4 = {HashMap$Node@2029} "qos.port" -> "33333"
+        //5 = {HashMap$Node@2030} "default.check" -> "false"
+        //6 = {HashMap$Node@2031} "dubbo" -> "2.0.0"
+        //7 = {HashMap$Node@2032} "pid" -> "3392"
+        //8 = {HashMap$Node@2033} "check" -> "false"
+        //9 = {HashMap$Node@2034} "interface" -> "com.alibaba.dubbo.demo.DemoService"
+        //10 = {HashMap$Node@2035} "default.retries" -> "0"
+        //11 = {HashMap$Node@2036} "application" -> "demoConsumer"
+        //12 = {HashMap$Node@2037} "default.timeout" -> "20000"
+        //13 = {HashMap$Node@2038} "mock" -> "com.alibaba.dubbo.demo.mock.DemoServiceMock"
+        //14 = {HashMap$Node@2039} "default.loadbalance" -> "random"
+        //15 = {HashMap$Node@2040} "timestamp" -> "1533175425425"
         ref = createProxy(map);
         ConsumerModel consumerModel = new ConsumerModel(getUniqueServiceName(), this, ref, interfaceClass.getMethods());
         // 将生成好的 consumer配置放入到 ApplicationModel 的 缓存中
@@ -370,6 +389,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
         } else {
+            //  url 点对点直连服务提供者地址，将绕过注册中心
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
                 // 可以引用多个服务，分隔符是 ；
                 String[] us = Constants.SEMICOLON_SPLIT_PATTERN.split(url);
@@ -379,14 +399,18 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                         if (url.getPath() == null || url.getPath().length() == 0) {
                             url = url.setPath(interfaceName);
                         }
+                        // 处理注册协议的情况
                         if (Constants.REGISTRY_PROTOCOL.equals(url.getProtocol())) {
                             urls.add(url.addParameterAndEncoded(Constants.REFER_KEY, StringUtils.toQueryString(map)));
                         } else {
+                            // 根据参数map 构建URL，并且添加到urls中
                             urls.add(ClusterUtils.mergeUrl(url, map));
                         }
                     }
                 }
-            } else { // assemble URL from register center's configuration
+            } else {
+                // assemble URL from register center's configuration
+                // 从注册中心获取引用服务，首先获取消费端订阅的注册中心
                 List<URL> us = loadRegistries(false);
                 if (us != null && !us.isEmpty()) {
                     for (URL u : us) {
@@ -394,6 +418,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                         if (monitorUrl != null) {
                             map.put(Constants.MONITOR_KEY, URL.encode(monitorUrl.toFullString()));
                         }
+                        //url 是注册协议， 根据参数map 设置要 refer参数
                         urls.add(u.addParameterAndEncoded(Constants.REFER_KEY, StringUtils.toQueryString(map)));
                     }
                 }
@@ -401,13 +426,22 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                     throw new IllegalStateException("No such any registry to reference " + interfaceName + " on the consumer " + NetUtils.getLocalHost() + " use dubbo version " + Version.getVersion() + ", please config <dubbo:registry address=\"...\" /> to your spring config.");
                 }
             }
-
+            // 主要用到了 refer 字段，refer是要引用的服务
+            // urls的数量是 要消费的注册中心的数量
+            // registry://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demoConsumer&dubbo=2.0.0&
+            // pid=14396&qos.port=33333&refer=application%3DdemoConsumer%26check%3Dfalse%26default.check%3Dfalse%26d
+            // efault.cluster%3Dfailover%26default.loadbalance%3Drandom%26default.retries%3D0%26default.timeout%3D20000%26
+            // dubbo%3D2.0.0%26interface%3Dcom.alibaba.dubbo.demo.DemoService%26methods%3DsayHello%26mock%3D
+            // com.alibaba.dubbo.demo.mock.DemoServiceMock%26pid%3D14396%26qos.port%3D33333%26register.ip%3D192.168.73.1%26
+            // side%3Dconsumer%26timestamp%3D1533182325940&registry=zookeeper&timestamp=1533182325997
+            // 处理引用一个注册中心服务的情况
             if (urls.size() == 1) {
-                // 核心方法
-                // 因为是广播，所以只有一个url
+                // 核心方法，首先调用RegistryProtocol的refer() 方法
                 // interface com.alibaba.dubbo.demo.DemoService
+                // 插件设计，根据 url中的协议，引用不同的插件，这里首先引用 registerProtocol协议
                 invoker = refprotocol.refer(interfaceClass, urls.get(0));
             } else {
+                // 处理引用多个注册中心服务的情况
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
                 URL registryURL = null;
                 for (URL url : urls) {
@@ -421,7 +455,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                     // use AvailableCluster only when register's cluster is available
                     URL u = registryURL.addParameter(Constants.CLUSTER_KEY, AvailableCluster.NAME);
                     // 核心方法，负载均衡获取invoker
-                    // 实际角色是 FailoverClusterInvoker，FailoverClusterInvoker 调用join方法从 Directory服务中获取
+                    // 实际角色是 FailoverClusterInvoker，FailoverClusterInvoker 调用join方法从 Directory目录服务中获取
                     // 可用的invoker，之后调用
                     invoker = cluster.join(new StaticDirectory(u, invokers));
                 } else { // not a registry url

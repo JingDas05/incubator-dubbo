@@ -180,6 +180,19 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         }
     }
 
+    // 会把zookeeper上面的服务回调 传回来
+
+    //  size = 2
+
+    // dubbo://192.168.73.1:20880/com.alibaba.dubbo.demo.DemoService?accepts=0&anyhost=true&application=demoProvider&
+    // buffer=8192&default.threadpool=fixed&default.timeout=30000&dispatcher=all&dubbo=2.0.0&generic=false&
+    // interface=com.alibaba.dubbo.demo.DemoService&iothreads=9&methods=sayHello&payload=88388608&pid=13540&
+    // register=true&serialization=hessian2&side=provider&threadpool=fixed&threads=100&timestamp=1533107170805
+
+    // dubbo://192.168.73.1:20881/com.alibaba.dubbo.demo.DemoService?accepts=0&anyhost=true&application=demoProvider&
+    // buffer=8192&default.threadpool=fixed&default.timeout=30000&dispatcher=all&dubbo=2.0.0&generic=false&
+    // interface=com.alibaba.dubbo.demo.DemoService&iothreads=9&methods=sayHello&payload=88388608&pid=12772&
+    // register=true&serialization=hessian2&side=provider&threadpool=fixed&threads=100&timestamp=1533189259702
     @Override
     public synchronized void notify(List<URL> urls) {
         List<URL> invokerUrls = new ArrayList<URL>();
@@ -225,14 +238,19 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
 
     /**
      * Convert the invokerURL list to the Invoker Map. The rules of the conversion are as follows:
-     * 1.If URL has been converted to invoker, it is no longer re-referenced and obtained directly from the cache, and notice that any parameter changes in the URL will be re-referenced.
+     * 1.If URL has been converted to invoker, it is no longer re-referenced and obtained directly from the cache,
+     * and notice that any parameter changes in the URL will be re-referenced.
+     *
      * 2.If the incoming invoker list is not empty, it means that it is the latest invoker list
-     * 3.If the list of incoming invokerUrl is empty, It means that the rule is only a override rule or a route rule, which needs to be re-contrasted to decide whether to re-reference.
+     *
+     * 3.If the list of incoming invokerUrl is empty, It means that the rule is only a override rule or a route rule,
+     * which needs to be re-contrasted to decide whether to re-reference.
      *
      * @param invokerUrls this parameter can't be null
      */
     // TODO: 2017/8/31 FIXME The thread pool should be used to refresh the address, otherwise the task may be accumulated.
     private void refreshInvoker(List<URL> invokerUrls) {
+        // 处理失效的服务
         if (invokerUrls != null && invokerUrls.size() == 1 && invokerUrls.get(0) != null
                 && Constants.EMPTY_PROTOCOL.equals(invokerUrls.get(0).getProtocol())) {
             this.forbidden = true; // Forbid to access
@@ -250,7 +268,10 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             if (invokerUrls.isEmpty()) {
                 return;
             }
+            // 将url转变为 invoker
+            // <url, Invoker>
             Map<String, Invoker<T>> newUrlInvokerMap = toInvokers(invokerUrls);// Translate url list to Invoker map
+            // <method, invokers>
             Map<String, List<Invoker<T>>> newMethodInvokerMap = toMethodInvokers(newUrlInvokerMap); // Change method name to map Invoker Map
             // state change
             // If the calculation is wrong, it is not processed.
@@ -261,6 +282,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             this.methodInvokerMap = multiGroup ? toMergeMethodInvokerMap(newMethodInvokerMap) : newMethodInvokerMap;
             this.urlInvokerMap = newUrlInvokerMap;
             try {
+                // 移除掉不用的invoker
                 destroyUnusedInvokers(oldUrlInvokerMap, newUrlInvokerMap); // Close the unused Invoker
             } catch (Exception e) {
                 logger.warn("destroyUnusedInvokers error. ", e);

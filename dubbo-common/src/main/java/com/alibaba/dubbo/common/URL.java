@@ -84,6 +84,7 @@ public final class URL implements Serializable {
     // by default, port to registry
     private final int port;
 
+    // 接口全名
     private final String path;
 
     private final Map<String, String> parameters;

@@ -51,6 +51,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     private final Set<String> anyServices = new ConcurrentHashSet<String>();
 
+    // 每个URL 可能有很多NotifyListener，每个NotifyListener都有各自的 ChildListener
     private final ConcurrentMap<URL, ConcurrentMap<NotifyListener, ChildListener>> zkListeners = new ConcurrentHashMap<URL, ConcurrentMap<NotifyListener, ChildListener>>();
 
     private final ZookeeperClient zkClient;
@@ -64,6 +65,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
         if (!group.startsWith(Constants.PATH_SEPARATOR)) {
             group = Constants.PATH_SEPARATOR + group;
         }
+        // root 默认是 "/" 开头
         this.root = group;
         // 初始化zkClient 用于操作zk
         zkClient = zookeeperTransporter.connect(url);
@@ -137,6 +139,9 @@ public class ZookeeperRegistry extends FailbackRegistry {
     protected void doSubscribe(final URL url, final NotifyListener listener) {
         try {
             // 如果订阅的全部接口,duboo-admin, 就会走这个方法，订阅了所有，也就是监听所有
+            // incubator-dubbo-ops 传入的是 RegistryServerSync 这个 listener
+            // 如果有变化，会回传和 url提供相同服务的所有url,因为 ncubator-dubbo-ops 订阅的是所有路径
+            // 所以所有的路径的变化，包括注销，都需要通知 listener
             if (Constants.ANY_VALUE.equals(url.getServiceInterface())) {
                 String root = toRootPath();
                 ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);

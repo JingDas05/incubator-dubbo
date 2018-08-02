@@ -525,6 +525,9 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             // export to local if the config is not remote (export to remote only when config is remote)
             if (!Constants.SCOPE_REMOTE.toString().equalsIgnoreCase(scope)) {
                 // provider 中 先暴露本地，再去暴露注册中心
+                // 每个服务默认都会在本地暴露。在引用服务的时候，默认优先引用本地服务。
+                // 如果希望引用远程服务可以使用一下配置强制引用远程服务。
+                // <dubbo:reference ... scope="remote" />
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)

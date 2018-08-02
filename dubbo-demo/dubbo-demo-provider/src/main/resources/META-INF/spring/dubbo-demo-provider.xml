@@ -51,7 +51,7 @@
             dispatcher="all"
             register="true"
             buffer="8192"
-            port="20880"/>
+            port="20881"/>
 
     <!-- service implementation, as same as regular local bean -->
     <bean id="demoService"
@@ -63,11 +63,9 @@
 
     <!-- 声明暴露的接口 -->
     <dubbo:service
-            registry="zookeeperDemo"
             protocol="protocolDemo"
             interface="com.alibaba.dubbo.demo.DemoService"
-            ref="demoService"
-            timeout="30000"/>
+            ref="demoService"/>
 
     <!-- 声明暴露的接口 -->
     <dubbo:service
@@ -76,5 +74,9 @@
             interface="com.alibaba.dubbo.demo.DemoService2"
             ref="demoService2"
             timeout="30000"/>
+
+    <!--服务提供者缺省值配置。对应的配置类： com.alibaba.dubbo.config.ProviderConfig。
+    同时该标签为 <dubbo:service> 和 <dubbo:protocol> 标签的缺省值设置。-->
+    <dubbo:provider registry="zookeeperDemo" threadpool="fixed" timeout="30000"/>
 
 </beans>

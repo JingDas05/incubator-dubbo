@@ -287,6 +287,7 @@ public class RegistryProtocol implements Protocol {
 
     @Override
     @SuppressWarnings("unchecked")
+    // type = interface com.alibaba.dubbo.demo.DemoService
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
         url = url.setProtocol(url.getParameter(Constants.REGISTRY_KEY, Constants.DEFAULT_REGISTRY)).removeParameter(Constants.REGISTRY_KEY);
         Registry registry = registryFactory.getRegistry(url);
@@ -294,9 +295,10 @@ public class RegistryProtocol implements Protocol {
             return proxyFactory.getInvoker((T) registry, type, url);
         }
 
-        // group="a,b" or group="*"
+        // group="a,b" or group="*" 获取要引用的服务的参数
         Map<String, String> qs = StringUtils.parseQueryString(url.getParameterAndDecoded(Constants.REFER_KEY));
         String group = qs.get(Constants.GROUP_KEY);
+        // 处理 group="a,b" or group="*" 的情况，使用MergeableCluster
         if (group != null && group.length() > 0) {
             if ((Constants.COMMA_SPLIT_PATTERN.split(group)).length > 1
                     || "*".equals(group)) {
@@ -310,6 +312,10 @@ public class RegistryProtocol implements Protocol {
         return ExtensionLoader.getExtensionLoader(Cluster.class).getExtension("mergeable");
     }
 
+    //
+    //
+    //
+    //
     private <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url) {
         RegistryDirectory<T> directory = new RegistryDirectory<T>(type, url);
         directory.setRegistry(registry);
@@ -319,9 +325,17 @@ public class RegistryProtocol implements Protocol {
         URL subscribeUrl = new URL(Constants.CONSUMER_PROTOCOL, parameters.remove(Constants.REGISTER_IP_KEY), 0, type.getName(), parameters);
         if (!Constants.ANY_VALUE.equals(url.getServiceInterface())
                 && url.getParameter(Constants.REGISTER_KEY, true)) {
+            // 注册消费者服务
             registry.register(subscribeUrl.addParameters(Constants.CATEGORY_KEY, Constants.CONSUMERS_CATEGORY,
                     Constants.CHECK_KEY, String.valueOf(false)));
         }
+        // 订阅地址，如果有变动，通知
+        // 订阅的地址路径为 consumer://192.168.73.1/com.alibaba.dubbo.demo.DemoService?application=demoConsumer&
+        // category=providers,configurators,routers&check=false&default.check=false&default.cluster=failover&
+        // default.loadbalance=random&default.retries=0&default.timeout=20000&dubbo=2.0.0&interface=com.alibaba.dubbo.demo.DemoService&
+        // methods=sayHello&mock=com.alibaba.dubbo.demo.mock.DemoServiceMock&pid=12700&qos.port=33333&side=consumer&timestamp=1533194236001
+
+        // 订阅是根据 group service version的 ?
         directory.subscribe(subscribeUrl.addParameter(Constants.CATEGORY_KEY,
                 Constants.PROVIDERS_CATEGORY
                         + "," + Constants.CONFIGURATORS_CATEGORY

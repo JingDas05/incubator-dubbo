@@ -37,7 +37,7 @@ public class ReferenceConfigCache {
     /**
      * Create the key with the <b>Group</b>, <b>Interface</b> and <b>version</b> attribute of {@link ReferenceConfig}.
      * <p>
-     * key example: <code>group1/com.alibaba.foo.FooService:1.0.0</code>.
+     * key 格式key example: <code>group1/com.alibaba.foo.FooService:1.0.0</code>.
      */
     public static final KeyGenerator DEFAULT_KEY_GENERATOR = new KeyGenerator() {
         @Override
@@ -65,6 +65,7 @@ public class ReferenceConfigCache {
     static final ConcurrentMap<String, ReferenceConfigCache> cacheHolder = new ConcurrentHashMap<String, ReferenceConfigCache>();
     private final String name;
     private final KeyGenerator generator;
+    // <key, referenceConfig>
     ConcurrentMap<String, ReferenceConfig<?>> cache = new ConcurrentHashMap<String, ReferenceConfig<?>>();
 
     private ReferenceConfigCache(String name, KeyGenerator generator) {
@@ -103,6 +104,7 @@ public class ReferenceConfigCache {
 
     @SuppressWarnings("unchecked")
     public <T> T get(ReferenceConfig<T> referenceConfig) {
+        // referenceConfig都有自己的key
         String key = generator.generateKey(referenceConfig);
 
         ReferenceConfig<?> config = cache.get(key);
