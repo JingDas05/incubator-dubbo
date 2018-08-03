@@ -65,6 +65,8 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
     private static final long serialVersionUID = -5864351140409987595L;
 
+    // Protocol 只是适配器，调用Protocol接口的方法时，会根据具体的方法参数url具体参数 去选择特定的实现类，并且初始化！
+    // 其他插件原理类似
     private static final Protocol refprotocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
 
     // FailoverCluster 默认的 工厂类

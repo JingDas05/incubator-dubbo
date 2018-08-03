@@ -374,6 +374,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         // registry://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demoProvider&dubbo=2.0.0&
         // pid=436&qos.port=22222&registry=zookeeper&timeout=30000&timestamp=1532685571509
         List<URL> registryURLs = loadRegistries(true);
+        // <dubbo:protocol name="dubbo" threads="100" port="20881" payload="88388608" buffer="8192" accepts="0" register="true"
+        // iothreads="9" threadpool="fixed" dispather="all" serialization="hessian2" dispatcher="all" id="protocolDemo" />
         for (ProtocolConfig protocolConfig : protocols) {
             // 暴露服务到注册中心
             doExportUrlsFor1Protocol(protocolConfig, registryURLs);
@@ -600,8 +602,9 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                     .setProtocol(Constants.LOCAL_PROTOCOL)
                     .setHost(LOCALHOST)
                     .setPort(0);
-            // 暂存当前服务 Class文件
+            // 暂存当前服务 Class文件，这个文件是接口的实现类
             ServiceClassHolder.getInstance().pushServiceClass(getServiceClass(ref));
+            // TODO: 2018/8/3 为什么调用的 ProtocolFilterWrapper
             Exporter<?> exporter = protocol.export(
                     proxyFactory.getInvoker(ref, (Class) interfaceClass, local));
             exporters.add(exporter);

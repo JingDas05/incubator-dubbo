@@ -31,6 +31,7 @@ import java.util.List;
 
 /**
  * ListenerProtocol
+ * 这个 ProtocolFilterWrapper 是每次最先执行的协议，之后是 ProtocolListenerWrapper
  */
 public class ProtocolFilterWrapper implements Protocol {
 
@@ -45,6 +46,7 @@ public class ProtocolFilterWrapper implements Protocol {
 
     // key为 service.filter 或者 reference.filter
     // group为 consumer 或者 provider
+    // 添加各种过滤器，在/META-INF/dubbo/internal中 com.alibaba.dubbo.rpc.Filter 中定义的
     private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String key, String group) {
         Invoker<T> last = invoker;
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);
@@ -101,7 +103,7 @@ public class ProtocolFilterWrapper implements Protocol {
         if (Constants.REGISTRY_PROTOCOL.equals(invoker.getUrl().getProtocol())) {
             return protocol.export(invoker);
         }
-        // invokerChain
+        // invokerChain，这个调用的是
         return protocol.export(buildInvokerChain(invoker, Constants.SERVICE_FILTER_KEY, Constants.PROVIDER));
     }
 

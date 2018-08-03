@@ -32,6 +32,12 @@ import com.alibaba.dubbo.rpc.support.MockInvoker;
 
 import java.util.List;
 
+
+/**
+ *
+ * 当在consumer中指定mock时，最终的invoker  是如下的实例，装饰了实际的invoker，实际调用的是invoker里面的invoke()
+ *
+ * */
 public class MockClusterInvoker<T> implements Invoker<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(MockClusterInvoker.class);

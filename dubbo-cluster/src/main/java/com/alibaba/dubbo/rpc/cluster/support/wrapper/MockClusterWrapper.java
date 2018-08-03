@@ -29,6 +29,8 @@ public class MockClusterWrapper implements Cluster {
 
     private Cluster cluster;
 
+    // 这个初始化的时候，会注入默认 的 FailoverCluster
+    // 这个是在 ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension()中初始化的
     public MockClusterWrapper(Cluster cluster) {
         this.cluster = cluster;
     }

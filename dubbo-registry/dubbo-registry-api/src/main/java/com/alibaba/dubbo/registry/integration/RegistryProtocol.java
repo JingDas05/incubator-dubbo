@@ -315,13 +315,40 @@ public class RegistryProtocol implements Protocol {
     //
     //
     //
-    //
+    // url zookeeper://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demoConsumer&dubbo=2.0.0&
+    // pid=10792&qos.port=33333&refer=application%3DdemoConsumer%26check%3Dfalse%26default.check%3Dfalse%26
+    // default.cluster%3Dfailover%26default.loadbalance%3Drandom%26default.retries%3D0%26default.timeout%3D20000%26dubbo%3D2.0.0%26
+    // interface%3Dcom.alibaba.dubbo.demo.DemoService%26methods%3DsayHello%26mock%3Dcom.alibaba.dubbo.demo.mock.DemoServiceMock
+    // %26pid%3D10792%26qos.port%3D33333%26register.ip%3D192.168.73.1%26side%3Dconsumer%26timestamp%3D1533266002155&timestamp=1533266002191
+
+    // 这个url 包含参数 refer, refer是要引用的服务路径
     private <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url) {
         RegistryDirectory<T> directory = new RegistryDirectory<T>(type, url);
         directory.setRegistry(registry);
         directory.setProtocol(protocol);
         // all attributes of REFER_KEY
+        // eg
+        // size = 16
+        // 0 = {HashMap$Node@2581} "default.cluster" -> "failover"
+        //1 = {HashMap$Node@2582} "side" -> "consumer"
+        //2 = {HashMap$Node@2583} "register.ip" -> "192.168.73.1"
+        //3 = {HashMap$Node@2584} "methods" -> "sayHello"
+        //4 = {HashMap$Node@2585} "default.check" -> "false"
+        //5 = {HashMap$Node@2586} "qos.port" -> "33333"
+        //6 = {HashMap$Node@2587} "dubbo" -> "2.0.0"
+        //7 = {HashMap$Node@2588} "pid" -> "11504"
+        //8 = {HashMap$Node@2589} "check" -> "false"
+        //9 = {HashMap$Node@2590} "interface" -> "com.alibaba.dubbo.demo.DemoService"
+        //10 = {HashMap$Node@2591} "default.retries" -> "0"
+        //11 = {HashMap$Node@2592} "application" -> "demoConsumer"
+        //12 = {HashMap$Node@2593} "default.timeout" -> "20000"
+        //13 = {HashMap$Node@2594} "mock" -> "com.alibaba.dubbo.demo.mock.DemoServiceMock"
+        //14 = {HashMap$Node@2595} "default.loadbalance" -> "random"
+        //15 = {HashMap$Node@2596} "timestamp" -> "1533266188586"
         Map<String, String> parameters = new HashMap<String, String>(directory.getUrl().getParameters());
+        // consumer://192.168.73.1/com.alibaba.dubbo.demo.DemoService?application=demoConsumer&check=false&default.check=false&
+        // default.cluster=failover&default.loadbalance=random&default.retries=0&default.timeout=20000&dubbo=2.0.0&
+        // interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&mock=com.alibaba.dubbo.demo.mock.DemoServiceMock&pid=12972&qos.port=33333&side=consumer&timestamp=1533266305673
         URL subscribeUrl = new URL(Constants.CONSUMER_PROTOCOL, parameters.remove(Constants.REGISTER_IP_KEY), 0, type.getName(), parameters);
         if (!Constants.ANY_VALUE.equals(url.getServiceInterface())
                 && url.getParameter(Constants.REGISTER_KEY, true)) {

@@ -32,11 +32,11 @@ import java.util.Collections;
 
 /**
  * ListenerProtocol
- * 这个是暴露协议的核心类，如果是 registry
+ *
  */
-// TODO: 2018/6/14 协议暴露核心类，包装了其他协议的执行
 public class ProtocolListenerWrapper implements Protocol {
 
+    // 这个协议才是最终需要执行的协议，比如 InjvmProtocol 或者 DubboProtocol
     private final Protocol protocol;
 
     public ProtocolListenerWrapper(Protocol protocol) {
