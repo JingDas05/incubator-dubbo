@@ -35,7 +35,8 @@ public class Consumer {
 
         while (true) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(1);
+//                Thread.sleep(1000);
                 String hello = demoService.sayHello("world"); // call remote method
                 System.out.println(hello); // get result
 

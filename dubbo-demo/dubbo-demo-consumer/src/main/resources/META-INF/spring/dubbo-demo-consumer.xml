@@ -54,4 +54,7 @@
             loadbalance="random"
             cluster="failover"/>
 
+    <!--dubbo-monitor 监控需要的配置-->
+    <dubbo:monitor protocol="registry" />
+
 </beans>
