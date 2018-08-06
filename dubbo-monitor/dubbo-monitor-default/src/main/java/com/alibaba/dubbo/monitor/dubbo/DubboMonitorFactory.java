@@ -42,6 +42,7 @@ public class DubboMonitorFactory extends AbstractMonitorFactory {
         this.proxyFactory = proxyFactory;
     }
 
+    // 核心方法
     @Override
     protected Monitor createMonitor(URL url) {
         url = url.setProtocol(url.getParameter(Constants.PROTOCOL_KEY, "dubbo"));
@@ -65,7 +66,8 @@ public class DubboMonitorFactory extends AbstractMonitorFactory {
         // qos.port=22222&refer=dubbo%3D2.0.0%26interface%3Dcom.alibaba.dubbo.monitor.MonitorService%26pid%3D5564%26
         // timestamp%3D1533548960687&reference.filter=-monitor&registry=zookeeper&timeout=30000&timestamp=1533548960483
 
-        // refer 注册中心上 监控平台注册上的服务
+        // TODO: 2018/8/6  引用远程服务核心方法
+        // refer 注册中心上 监控平台注册上的服务，创建代理
         Invoker<MonitorService> monitorInvoker = protocol.refer(MonitorService.class, url);
         MonitorService monitorService = proxyFactory.getProxy(monitorInvoker);
         return new DubboMonitor(monitorInvoker, monitorService);
