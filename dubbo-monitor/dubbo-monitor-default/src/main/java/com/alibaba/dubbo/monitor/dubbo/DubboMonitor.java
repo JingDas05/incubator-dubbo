@@ -59,6 +59,7 @@ public class DubboMonitor implements Monitor {
     public DubboMonitor(Invoker<MonitorService> monitorInvoker, MonitorService monitorService) {
         this.monitorInvoker = monitorInvoker;
         this.monitorService = monitorService;
+        // 默认每分钟发一次监控信息
         this.monitorInterval = monitorInvoker.getUrl().getPositiveParameter("interval", 60000);
         // collect timer for collecting statistics data
         sendFuture = scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
@@ -135,6 +136,8 @@ public class DubboMonitor implements Monitor {
         }
     }
 
+    // count://192.168.73.1:20881/com.alibaba.dubbo.demo.DemoService/sayHello?application=demoProvider&concurrent=1&
+    // consumer=192.168.73.1&elapsed=0&group=&input=215&interface=com.alibaba.dubbo.demo.DemoService&method=sayHello&output=&success=1&version=
     @Override
     public void collect(URL url) {
         // data to collect from url
@@ -145,7 +148,9 @@ public class DubboMonitor implements Monitor {
         int elapsed = url.getParameter(MonitorService.ELAPSED, 0);
         int concurrent = url.getParameter(MonitorService.CONCURRENT, 0);
         // init atomic reference
+        // 构建统计对象
         Statistics statistics = new Statistics(url);
+        // 原子操作引用，线程安全
         AtomicReference<long[]> reference = statisticsMap.get(statistics);
         if (reference == null) {
             statisticsMap.putIfAbsent(statistics, new AtomicReference<long[]>());
@@ -179,6 +184,7 @@ public class DubboMonitor implements Monitor {
                 update[8] = current[8] > elapsed ? current[8] : elapsed;
                 update[9] = current[9] > concurrent ? current[9] : concurrent;
             }
+            // 如果不成功，一直重试
         } while (!reference.compareAndSet(current, update));
     }
 

@@ -60,9 +60,14 @@ public abstract class AbstractMonitorFactory implements MonitorFactory {
         return Collections.unmodifiableCollection(MONITORS.values());
     }
 
+    // dubbo://127.0.0.1:2181/com.alibaba.dubbo.monitor.MonitorService?application=demoProvider&dubbo=2.0.0&
+    // interface=com.alibaba.dubbo.monitor.MonitorService&pid=5016&protocol=registry&qos.port=22222&
+    // refer=dubbo%3D2.0.0%26interface%3Dcom.alibaba.dubbo.monitor.MonitorService%26pid%3D5016%26timestamp%3D1533548136563&
+    // registry=zookeeper&timeout=30000&timestamp=1533548136314
     @Override
     public Monitor getMonitor(URL url) {
         url = url.setPath(MonitorService.class.getName()).addParameter(Constants.INTERFACE_KEY, MonitorService.class.getName());
+        // dubbo://127.0.0.1:2181/com.alibaba.dubbo.monitor.MonitorService
         String key = url.toServiceStringWithoutResolving();
         Monitor monitor = MONITORS.get(key);
         Future<Monitor> future = FUTURES.get(key);
@@ -78,6 +83,7 @@ public abstract class AbstractMonitorFactory implements MonitorFactory {
                 return monitor;
             }
 
+            // TODO: 2018/8/6 这个地方的逻辑需要深挖下
             final URL monitorUrl = url;
             final ListenableFutureTask<Monitor> listenableFutureTask = ListenableFutureTask.create(new MonitorCreator(monitorUrl));
             listenableFutureTask.addListener(new MonitorListener(key));
@@ -108,6 +114,7 @@ public abstract class AbstractMonitorFactory implements MonitorFactory {
         }
     }
 
+    // 设置Monitor 监听器，根据key获取监听器
     class MonitorListener implements Runnable {
 
         private String key;

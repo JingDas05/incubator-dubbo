@@ -22,6 +22,8 @@ import com.alibaba.dubbo.common.extension.SPI;
 
 /**
  * Protocol. (API/SPI, Singleton, ThreadSafe)
+ * 协议暴露时，是一个传递链
+ * ProtocolFilterWrapper -》 ProtocolListenerWrapper -》 具体指定的协议
  */
 @SPI("dubbo")
 public interface Protocol {
@@ -34,7 +36,6 @@ public interface Protocol {
     int getDefaultPort();
 
     /**
-     *
      * 暴露远程服务
      * Export service for remote invocation: <br>
      * 1. Protocol should record request source address after receive a request:
@@ -54,7 +55,6 @@ public interface Protocol {
     <T> Exporter<T> export(Invoker<T> invoker) throws RpcException;
 
     /**
-     *
      * 引用远程服务
      * Refer a remote service: <br>
      * 1. When user calls `invoke()` method of `Invoker` object which's returned from `refer()` call,

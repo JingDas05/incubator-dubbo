@@ -56,6 +56,16 @@ public class DubboMonitorFactory extends AbstractMonitorFactory {
         }
         url = url.addParameters(Constants.CLUSTER_KEY, "failsafe", Constants.CHECK_KEY, String.valueOf(false),
                 Constants.REFERENCE_FILTER_KEY, filter + "-monitor");
+        // 核心
+        // 引用远程服务MonitorService,也即 dubbo-monitor上的服务，将本地的数据传送过去
+        // 这个类打包在 dubbo-monitor-default中，消费者和服务者如果需要监控的话，需要依赖此包，进行初始化MonitorService代理
+
+        // url registry://127.0.0.1:2181/com.alibaba.dubbo.monitor.MonitorService?application=demoProvider&check=false&
+        // cluster=failsafe&dubbo=2.0.0&interface=com.alibaba.dubbo.monitor.MonitorService&pid=5564&protocol=registry&
+        // qos.port=22222&refer=dubbo%3D2.0.0%26interface%3Dcom.alibaba.dubbo.monitor.MonitorService%26pid%3D5564%26
+        // timestamp%3D1533548960687&reference.filter=-monitor&registry=zookeeper&timeout=30000&timestamp=1533548960483
+
+        // refer 注册中心上 监控平台注册上的服务
         Invoker<MonitorService> monitorInvoker = protocol.refer(MonitorService.class, url);
         MonitorService monitorService = proxyFactory.getProxy(monitorInvoker);
         return new DubboMonitor(monitorInvoker, monitorService);

@@ -20,7 +20,11 @@ import com.alibaba.dubbo.common.Node;
 
 /**
  * Invoker. (API/SPI, Prototype, ThreadSafe)
- * 所有的实现类都是
+ * <p>
+ * ProtocolFilterWrapper 中的 buildInvokerChain() 构建 Invoker，也就是说，先执行过滤器的方法，再最后执行
+ * Invoker.invoke(Invocation invocation)方法
+ * <p>
+ * 监控模块就是用 MonitorFilter实现的
  *
  * @see com.alibaba.dubbo.rpc.Protocol#refer(Class, com.alibaba.dubbo.common.URL)
  * @see com.alibaba.dubbo.rpc.InvokerListener

@@ -39,6 +39,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * MonitorFilter. (SPI, Singleton, ThreadSafe)
+ * <p>
+ * * do invoke filter.
+ * * <p>
+ * * <code>
+ * * // before filter
+ * * Result result = invoker.invoke(invocation);
+ * * // after filter
+ * * return result;
+ * * </code>
+ * <p>
+ * 监控是通过 过滤器实现的，这个是在暴露协议的时候，buildInvokerChain方法中建立的Filter
  */
 @Activate(group = {Constants.PROVIDER, Constants.CONSUMER})
 public class MonitorFilter implements Filter {
@@ -47,6 +58,13 @@ public class MonitorFilter implements Filter {
 
     private final ConcurrentMap<String, AtomicInteger> concurrents = new ConcurrentHashMap<String, AtomicInteger>();
 
+    // 如果不引用如下依赖，monitorFactory 为空
+    //         <dependency>
+    //            <groupId>com.alibaba</groupId>
+    //            <artifactId>dubbo-monitor-default</artifactId>
+    //            <version>2.6.2</version>
+    //        </dependency>
+    // MonitorFactory 主要用于获取监控服务
     private MonitorFactory monitorFactory;
 
     public void setMonitorFactory(MonitorFactory monitorFactory) {
@@ -56,20 +74,27 @@ public class MonitorFilter implements Filter {
     // intercepting invocation
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        // 开启监控的话，才进行监控
         if (invoker.getUrl().hasParameter(Constants.MONITOR_KEY)) {
             RpcContext context = RpcContext.getContext(); // provider must fetch context before invoke() gets called
             String remoteHost = context.getRemoteHost();
-            long start = System.currentTimeMillis(); // record start timestamp
-            getConcurrent(invoker, invocation).incrementAndGet(); // count up
+            // record start timestamp
+            long start = System.currentTimeMillis();
+            // count up, 自增版本号
+            getConcurrent(invoker, invocation).incrementAndGet();
             try {
-                Result result = invoker.invoke(invocation); // proceed invocation chain
+                // proceed invocation chain
+                Result result = invoker.invoke(invocation);
+                // 收集 正常 监控数据
                 collect(invoker, invocation, result, remoteHost, start, false);
                 return result;
             } catch (RpcException e) {
+                // 收集 异常 监控数据
                 collect(invoker, invocation, null, remoteHost, start, true);
                 throw e;
             } finally {
-                getConcurrent(invoker, invocation).decrementAndGet(); // count down
+                // count down 自减版本号
+                getConcurrent(invoker, invocation).decrementAndGet();
             }
         } else {
             return invoker.invoke(invocation);
@@ -77,17 +102,36 @@ public class MonitorFilter implements Filter {
     }
 
     // collect info
+    // error是否发生错误
     private void collect(Invoker<?> invoker, Invocation invocation, Result result, String remoteHost, long start, boolean error) {
         try {
             // ---- service statistics ----
-            long elapsed = System.currentTimeMillis() - start; // invocation cost
-            int concurrent = getConcurrent(invoker, invocation).get(); // current concurrent count
+            // invocation cost
+            long elapsed = System.currentTimeMillis() - start;
+            // current concurrent count
+            int concurrent = getConcurrent(invoker, invocation).get();
             String application = invoker.getUrl().getParameter(Constants.APPLICATION_KEY);
             String service = invoker.getInterface().getName(); // service name
             String method = RpcUtils.getMethodName(invocation); // method name
             String group = invoker.getUrl().getParameter(Constants.GROUP_KEY);
             String version = invoker.getUrl().getParameter(Constants.VERSION_KEY);
+            // 这个是配置在配置文件中的配置
+
+            //<!--dubbo-monitor 监控需要的配置-->
+            // <dubbo:monitor protocol="registry" />
+
+            //  dubbo://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demoConsumer&dubbo=2.0.0&
+            // pid=7416&protocol=registry&qos.port=33335&refer=dubbo%3D2.0.0%26
+            // interface%3Dcom.alibaba.dubbo.monitor.MonitorService%26pid%3D7416%26timestamp%3D1533524515896&registry=zookeeper&timestamp=1533524515872
             URL url = invoker.getUrl().getUrlParameter(Constants.MONITOR_KEY);
+            // 如果不引用如下依赖，monitorFactory 为空
+            //         <dependency>
+            //            <groupId>com.alibaba</groupId>
+            //            <artifactId>dubbo-monitor-default</artifactId>
+            //            <version>2.6.2</version>
+            //        </dependency>
+
+            // DubboMonitor
             Monitor monitor = monitorFactory.getMonitor(url);
             if (monitor == null) {
                 return;
@@ -97,11 +141,13 @@ public class MonitorFilter implements Filter {
             String remoteValue;
             if (Constants.CONSUMER_SIDE.equals(invoker.getUrl().getParameter(Constants.SIDE_KEY))) {
                 // ---- for service consumer ----
+                // 处理消费端监控
                 localPort = 0;
                 remoteKey = MonitorService.PROVIDER;
                 remoteValue = invoker.getUrl().getAddress();
             } else {
                 // ---- for service provider ----
+                // 处理服务端监控
                 localPort = invoker.getUrl().getPort();
                 remoteKey = MonitorService.CONSUMER;
                 remoteValue = remoteHost;
@@ -113,6 +159,9 @@ public class MonitorFilter implements Filter {
             if (result != null && result.getAttachment(Constants.OUTPUT_KEY) != null) {
                 output = result.getAttachment(Constants.OUTPUT_KEY);
             }
+            // path 是 service + "/" + method
+            // count://192.168.73.1:20881/com.alibaba.dubbo.demo.DemoService/sayHello?application=demoProvider&concurrent=1&
+            // consumer=192.168.73.1&elapsed=0&group=&input=215&interface=com.alibaba.dubbo.demo.DemoService&method=sayHello&output=&success=1&version=
             monitor.collect(new URL(Constants.COUNT_PROTOCOL,
                     NetUtils.getLocalHost(), localPort,
                     service + "/" + method,
@@ -134,6 +183,7 @@ public class MonitorFilter implements Filter {
 
     // concurrent counter
     private AtomicInteger getConcurrent(Invoker<?> invoker, Invocation invocation) {
+        // 根据接口名字+方法名 返回 key
         String key = invoker.getInterface().getName() + "." + invocation.getMethodName();
         AtomicInteger concurrent = concurrents.get(key);
         if (concurrent == null) {

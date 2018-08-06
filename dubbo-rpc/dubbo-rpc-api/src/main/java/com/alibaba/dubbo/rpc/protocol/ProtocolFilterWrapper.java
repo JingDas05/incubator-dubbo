@@ -35,6 +35,7 @@ import java.util.List;
  */
 public class ProtocolFilterWrapper implements Protocol {
 
+    // 这个实例是 ProtocolListenerWrapper
     private final Protocol protocol;
 
     public ProtocolFilterWrapper(Protocol protocol) {
@@ -49,6 +50,16 @@ public class ProtocolFilterWrapper implements Protocol {
     // 添加各种过滤器，在/META-INF/dubbo/internal中 com.alibaba.dubbo.rpc.Filter 中定义的
     private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String key, String group) {
         Invoker<T> last = invoker;
+        // 根据URL或许所有的过滤器
+        //0 = {EchoFilter@2110}
+        //1 = {ClassLoaderFilter@2111}
+        //2 = {GenericFilter@2112}
+        //3 = {ContextFilter@2113}
+        //4 = {TraceFilter@2114}
+        //5 = {TimeoutFilter@2115}
+        // 这个是用于监控的！！！
+        //6 = {MonitorFilter@2116}
+        //7 = {ExceptionFilter@2117}
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);
         if (!filters.isEmpty()) {
             for (int i = filters.size() - 1; i >= 0; i--) {

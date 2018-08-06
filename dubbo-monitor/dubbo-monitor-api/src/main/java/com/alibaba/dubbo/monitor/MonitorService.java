@@ -23,6 +23,7 @@ import java.util.List;
 
 /**
  * MonitorService. (SPI, Prototype, ThreadSafe)
+ * MonitorFilter 使用的服务，进行监控
  */
 public interface MonitorService {
 
