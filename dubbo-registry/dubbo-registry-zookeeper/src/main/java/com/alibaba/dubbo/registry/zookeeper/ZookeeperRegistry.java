@@ -277,6 +277,9 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return toServicePath(url) + Constants.PATH_SEPARATOR + url.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY);
     }
 
+    // 拼接 provider 在 zookeeper上的路径
+    // eg /dubbo/com.alibaba.dubbo.demo.DemoService2/providers/
+    // dubbo%3A%2F%2F192.168.73.1%3A20881%2Fcom.alibaba.dubbo.demo.DemoService2%3Faccepts%3D0%26anyhost%3Dtrue%26application%3DdemoProvider%26buffer%3D8192%26default.threadpool%3Dfixed%26default.timeout%3D30000%26dispatcher%3Dall%26dubbo%3D2.0.0%26generic%3Dfalse%26interface%3Dcom.alibaba.dubbo.demo.DemoService2%26iothreads%3D9%26methods%3DsayHello2%2CanotherSayHello2%26payload%3D88388608%26pid%3D5536%26register%3Dtrue%26serialization%3Dhessian2%26side%3Dprovider%26threadpool%3Dfixed%26threads%3D100%26timeout%3D30000%26timestamp%3D1533803771329
     private String toUrlPath(URL url) {
         return toCategoryPath(url) + Constants.PATH_SEPARATOR + URL.encode(url.toFullString());
     }

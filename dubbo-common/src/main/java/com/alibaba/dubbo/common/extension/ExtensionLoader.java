@@ -67,6 +67,8 @@ public class ExtensionLoader<T> {
 
     private static final String DUBBO_INTERNAL_DIRECTORY = DUBBO_DIRECTORY + "internal/";
 
+    // * 零次或多次匹配前面的字符或子表达式
+    // + 一次或多次匹配前面的字符或子表达式
     private static final Pattern NAME_SEPARATOR = Pattern.compile("\\s*[,]+\\s*");
 
     private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<Class<?>, ExtensionLoader<?>>();
@@ -82,6 +84,9 @@ public class ExtensionLoader<T> {
 
     private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<Class<?>, String>();
 
+    // cachedClasses
+    // 0 = {HashMap$Node@1497} "spring" -> "class com.alibaba.dubbo.config.spring.extension.SpringExtensionFactory"
+    // 1 = {HashMap$Node@1498} "spi" -> "class com.alibaba.dubbo.common.extension.factory.SpiExtensionFactory"
     private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<Map<String, Class<?>>>();
 
     private final Map<String, Activate> cachedActivates = new ConcurrentHashMap<String, Activate>();
@@ -525,9 +530,12 @@ public class ExtensionLoader<T> {
                             && Modifier.isPublic(method.getModifiers())) {
                         Class<?> pt = method.getParameterTypes()[0];
                         try {
+                            // 获取属性名
                             String property = method.getName().length() > 3 ? method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4) : "";
+                            // 获取属性值
                             Object object = objectFactory.getExtension(pt, property);
                             if (object != null) {
+                                // 反射设置属性值
                                 method.invoke(instance, object);
                             }
                         } catch (Exception e) {
@@ -555,6 +563,10 @@ public class ExtensionLoader<T> {
     }
 
     // 享元模式
+
+    // cachedClasses
+    // 0 = {HashMap$Node@1497} "spring" -> "class com.alibaba.dubbo.config.spring.extension.SpringExtensionFactory"
+    // 1 = {HashMap$Node@1498} "spi" -> "class com.alibaba.dubbo.common.extension.factory.SpiExtensionFactory"
     private Map<String, Class<?>> getExtensionClasses() {
         Map<String, Class<?>> classes = cachedClasses.get();
         if (classes == null) {
@@ -574,7 +586,7 @@ public class ExtensionLoader<T> {
     private Map<String, Class<?>> loadExtensionClasses() {
         // 获取处理类型是否有SPI注解
         final SPI defaultAnnotation = type.getAnnotation(SPI.class);
-        // 初始化 cachedDefaultName
+        // 初始化 cachedDefaultName，例如 Protocol中的注解@SPI("dubbo") ，取的就是dubbo
         if (defaultAnnotation != null) {
             String value = defaultAnnotation.value();
             if ((value = value.trim()).length() > 0) {
@@ -677,7 +689,7 @@ public class ExtensionLoader<T> {
                         + ", " + clazz.getClass().getName());
             }
         } else if (isWrapperClass(clazz)) {
-            // 初始wrapper类的情况
+            // 初始wrapper类的情况,如果是wrapper类，不添加到extensionClasses中，只是添加到缓存中
             Set<Class<?>> wrappers = cachedWrapperClasses;
             if (wrappers == null) {
                 cachedWrapperClasses = new ConcurrentHashSet<Class<?>>();
@@ -686,6 +698,7 @@ public class ExtensionLoader<T> {
             // 添加缓存
             wrappers.add(clazz);
         } else {
+            // 正常的类
             clazz.getConstructor();
             if (name == null || name.length() == 0) {
                 name = findAnnotationName(clazz);
@@ -711,6 +724,7 @@ public class ExtensionLoader<T> {
                         // 放入缓存 key是name, value是class文件
                         extensionClasses.put(n, clazz);
                     } else if (c != clazz) {
+                        // 相同的插件 报错
                         throw new IllegalStateException("Duplicate extension " + type.getName() + " name " + n + " on " + c.getName() + " and " + clazz.getName());
                     }
                 }
@@ -751,7 +765,7 @@ public class ExtensionLoader<T> {
 
     private Class<?> getAdaptiveExtensionClass() {
         // 获取适配后的具体实现类
-        // getExtensionClasses 方法 初始化了cachedAdaptiveClass 字段
+        // getExtensionClasses 方法 初始化了cachedAdaptiveClass
         getExtensionClasses();
         if (cachedAdaptiveClass != null) {
             return cachedAdaptiveClass;

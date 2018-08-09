@@ -71,7 +71,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     private static final long serialVersionUID = 3033787999037024738L;
 
-    // 获取协议，默认是 dubbo协议
+    // 获取协议的包装类，默认是 dubbo协议
     private static final Protocol protocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
     // 默认动态代理工厂 JavassistProxyFactory
     private static final ProxyFactory proxyFactory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
